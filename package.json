@@ -1,17 +1,22 @@
 {
-  "name": "blog-temp",
+  "name": "blog",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "velite dev & next dev --turbopack",
+    "build": "velite build && next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
     "next": "16.1.6",
+    "next-themes": "^0.4.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "rehype-pretty-code": "^0.14.1",
+    "shiki": "^3.21.0",
+    "velite": "^0.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
