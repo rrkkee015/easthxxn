@@ -1,6 +1,6 @@
 import Parser from "rss-parser";
 import OpenAI from "openai";
-import { writeFileSync, existsSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
 
@@ -71,7 +71,7 @@ async function generateSummary(articles: Article[]): Promise<string> {
       { role: "user", content: userPrompt },
     ],
     temperature: 0.7,
-    max_tokens: 3000,
+    max_tokens: 4500,
   });
 
   const content = response.choices[0]?.message?.content;
@@ -81,6 +81,50 @@ async function generateSummary(articles: Article[]): Promise<string> {
 
   console.log("[OpenAI] Summary generated successfully");
   return content;
+}
+
+async function generateImage(
+  openai: OpenAI,
+  imagePrompt: string,
+  fileName: string
+): Promise<string | null> {
+  const imageDir = join(process.cwd(), "public", "images", "news");
+  mkdirSync(imageDir, { recursive: true });
+
+  const imagePath = join(imageDir, `${fileName}.png`);
+  const publicPath = `/images/news/${fileName}.png`;
+
+  if (existsSync(imagePath)) {
+    console.log(`[Image] ${fileName} already exists, skipping`);
+    return publicPath;
+  }
+
+  try {
+    console.log(`[Image] Generating ${fileName}...`);
+
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: imagePrompt,
+      n: 1,
+      size: "1792x1024",
+      quality: "standard",
+    });
+
+    const imageUrl = response.data[0]?.url;
+    if (!imageUrl) {
+      throw new Error("No image URL returned");
+    }
+
+    const imageResponse = await fetch(imageUrl);
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    writeFileSync(imagePath, buffer);
+
+    console.log(`[Image] Saved ${fileName}`);
+    return publicPath;
+  } catch (error) {
+    console.error(`[Image] Failed to generate ${fileName}:`, error);
+    return null;
+  }
 }
 
 function getTodayDateString(): string {
@@ -100,7 +144,11 @@ function formatDisplayDate(dateStr: string): string {
   });
 }
 
-function buildMDX(dateStr: string, description: string, body: string): string {
+function buildMDX(
+  dateStr: string,
+  description: string,
+  body: string
+): string {
   const displayDate = formatDisplayDate(dateStr);
 
   return `---
@@ -131,26 +179,49 @@ async function main() {
   // 2. Generate summary via OpenAI
   const rawOutput = await generateSummary(articles);
 
-  // 3. Parse description from output
+  // 3. Parse metadata from output
   let description = "Today's US news brief for English learners";
   let body = rawOutput;
 
-  const descMatch = rawOutput.match(/^DESCRIPTION:\s*(.+)/);
+  const descMatch = rawOutput.match(/^DESCRIPTION:\s*(.+)/m);
   if (descMatch) {
     description = descMatch[1].trim().replace(/"/g, '\\"');
-    // Remove the DESCRIPTION line and the blank line after it
-    body = rawOutput.replace(/^DESCRIPTION:.*\n\n?/, "");
   }
 
-  // 4. Write MDX file
+  // Parse all IMAGE_N prompts
+  const imagePrompts: Record<number, string> = {};
+  const imageRegex = /^IMAGE_(\d+):\s*(.+)/gm;
+  let match;
+  while ((match = imageRegex.exec(rawOutput)) !== null) {
+    imagePrompts[parseInt(match[1])] = match[2].trim();
+  }
+
+  // Remove metadata lines
+  body = body.replace(/^DESCRIPTION:.*\n?/m, "");
+  body = body.replace(/^IMAGE_\d+:.*\n?/gm, "");
+  body = body.replace(/^\n+/, "");
+
+  // 4. Generate images and replace markers
+  const openai = new OpenAI();
   const dateStr = getTodayDateString();
+
+  for (const [num, prompt] of Object.entries(imagePrompts)) {
+    const fileName = `${dateStr}-${num}`;
+    const imagePath = await generateImage(openai, prompt, fileName);
+
+    if (imagePath) {
+      body = body.replace(
+        `[IMAGE_${num}]`,
+        `![Article ${num}](${imagePath})`
+      );
+    } else {
+      body = body.replace(`[IMAGE_${num}]`, "");
+    }
+  }
+
+  // 5. Write MDX file
   const fileName = `${dateStr}-us-news.mdx`;
-  const filePath = join(
-    process.cwd(),
-    "content",
-    "posts",
-    fileName
-  );
+  const filePath = join(process.cwd(), "content", "posts", fileName);
 
   if (existsSync(filePath)) {
     console.log(`[Skip] ${fileName} already exists`);

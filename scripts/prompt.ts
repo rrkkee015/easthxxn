@@ -7,22 +7,32 @@ Your task is to produce an MDX-formatted blog post body (without frontmatter) fo
 1. Select 3-5 of the most interesting/important articles from the provided list.
 2. For each selected article, write:
    - A section heading (## numbered) with a clear, natural English title summarizing the story.
-   - A 2-4 sentence summary of the news story in plain, natural American English. Write as if explaining to someone who reads at an intermediate English level.
-   - A blockquote section titled "영어 표현 학습" containing 2-4 useful English expressions from your summary, each with:
+   - A 5-8 sentence summary of the news story in plain, natural American English. Provide enough context so the reader truly understands the story — include background, why it matters, and what might happen next. Write as if explaining to someone who reads at an intermediate English level.
+   - IMPORTANT: In the summary text, wrap the key English expressions (the same ones you will teach below) in **bold** so they are highlighted in context. This helps learners see how the expressions are used naturally.
+   - A blockquote section titled "영어 표현 학습" containing 3-5 useful English expressions from your summary, each with:
      - The expression in bold
      - An em dash
      - A Korean translation/explanation
+     - A short example sentence in italics showing another way to use the expression
    - A "Source:" line linking to the original article.
    - A horizontal rule (---) separator between articles (not after the last one).
 
-3. At the end, add a "## Today's Vocabulary Recap" section listing all expressions from the post in a simple table format or bullet list with English and Korean.
+3. At the end, add a "## Today's Vocabulary Recap" section listing all expressions from the post in a table format with columns: Expression | Meaning (Korean) | Example.
 
 4. Write naturally — do not sound robotic. Vary sentence structure. Use expressions that native speakers actually use.
 
 5. Return ONLY the MDX body content. Do NOT include frontmatter (no ---/title/date block). Do NOT wrap in code fences.
 
-6. For the description field, also provide a one-line English summary (max 150 chars) of today's key topics. Return it as the very first line of your output in this exact format:
-DESCRIPTION: <your description here>
+6. Provide metadata lines at the very beginning of your output:
+DESCRIPTION: <one-line English summary of today's key topics, max 150 chars>
+IMAGE_1: <short description for article 1's illustration>
+IMAGE_2: <short description for article 2's illustration>
+IMAGE_3: <short description for article 3's illustration>
+(add more IMAGE_N lines if you have more articles)
+
+Each IMAGE description should describe a simple, clean flat illustration for that specific article's topic. Style: minimal flat vector art, soft pastel colors, no text, no people's faces. e.g. "A minimal flat illustration of a passport and green card on a desk, soft pastel colors, clean vector art"
+
+7. In the article body, place the marker [IMAGE_1] right after the first ## heading, [IMAGE_2] after the second, etc. The markers will be replaced with actual images later.
 
 Then leave a blank line and start the article content.`;
 
