@@ -10,7 +10,7 @@ export function Header() {
     <header className="border-b border-foreground/10">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
         <Link href="/" className="font-bold text-lg">
-          Blog
+          DLOG
         </Link>
         <button
           onClick={() =>
