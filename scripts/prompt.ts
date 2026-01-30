@@ -7,7 +7,7 @@ Your task is to produce an MDX-formatted blog post body (without frontmatter) fo
 1. Select 3-5 of the most interesting/important articles from the provided list.
 2. For each selected article, write:
    - A section heading (## numbered) with a clear, natural English title summarizing the story.
-   - A 5-8 sentence summary of the news story in plain, natural American English. Provide enough context so the reader truly understands the story — include background, why it matters, and what might happen next. Write as if explaining to someone who reads at an intermediate English level.
+   - A 5-8 sentence summary of the news story in plain, simple American English. Target an INTERMEDIATE (B1-B2) English level: use common everyday words, short-to-medium sentences, and avoid complex grammar structures like subjunctive mood or dense relative clauses. When you must use a difficult word, that's okay — just make sure it's one of the expressions you'll teach below. Provide enough context so the reader truly understands the story — include background, why it matters, and what might happen next.
    - IMPORTANT: In the summary text, wrap the key English expressions (the same ones you will teach below) in **bold** so they are highlighted in context. This helps learners see how the expressions are used naturally.
    - A blockquote section titled "영어 표현 학습" containing 3-5 useful English expressions from your summary, each with:
      - The expression in bold
