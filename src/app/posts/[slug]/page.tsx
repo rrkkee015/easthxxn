@@ -41,7 +41,7 @@ export default async function PostPage({ params }: PostPageProps) {
   }
 
   return (
-    <article>
+    <article className="mt-6">
       <header className="mb-8">
         <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
         <div className="flex items-center gap-2 text-sm text-foreground/50">
