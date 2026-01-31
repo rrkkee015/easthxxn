@@ -42,17 +42,6 @@ export default async function OgImage() {
         >
           easthxxn
         </div>
-        <div
-          style={{
-            fontSize: 32,
-            color: "rgba(255,255,255,0.4)",
-            marginTop: 20,
-            fontFamily: "Noto Sans KR",
-            fontWeight: 700,
-          }}
-        >
-          개발 블로그
-        </div>
       </div>
     ),
     {
