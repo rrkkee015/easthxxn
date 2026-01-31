@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollRestore } from "@/components/scroll-restore";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import { getAllCategories } from "@/lib/categories";
 import "./globals.css";
 
