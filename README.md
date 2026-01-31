@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Dlog</h1>
+  <h1>easthxxn</h1>
   <a href="https://easthxxn.com">https://easthxxn.com</a>
   <br />
   <br />

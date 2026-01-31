@@ -20,8 +20,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Dlog",
-    template: "%s | Dlog",
+    default: "easthxxn",
+    template: "%s | easthxxn",
   },
   description: "개발 블로그",
   metadataBase: new URL("https://easthxxn.com"),

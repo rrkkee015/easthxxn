@@ -14,15 +14,16 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           background: "#18181b",
-          borderRadius: 8,
-          fontSize: 22,
+          borderRadius: 4,
+          fontSize: 20,
+          paddingBottom: 2,
           fontWeight: 800,
           fontFamily: "system-ui, sans-serif",
           color: "#fafafa",
           letterSpacing: "-0.02em",
         }}
       >
-        D
+        e
       </div>
     ),
     { ...size },
