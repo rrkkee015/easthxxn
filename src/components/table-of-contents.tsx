@@ -11,8 +11,11 @@ interface TocItem {
 export function TableOfContents({ toc }: { toc: TocItem[] }) {
   const [activeId, setActiveId] = useState<string>("");
   const rafRef = useRef<number>(0);
+  const isClickScrolling = useRef(false);
 
   const updateActiveId = useCallback(() => {
+    if (isClickScrolling.current) return;
+
     const headingElements = toc
       .map(({ id }) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
@@ -58,9 +61,16 @@ export function TableOfContents({ toc }: { toc: TocItem[] }) {
     e.preventDefault();
     const el = document.getElementById(id);
     if (el) {
+      isClickScrolling.current = true;
+      setActiveId(id);
       const top = el.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top, behavior: "smooth" });
-      setActiveId(id);
+      // smooth 스크롤이 끝나면 잠금 해제
+      const unlock = () => {
+        isClickScrolling.current = false;
+        window.removeEventListener("scrollend", unlock);
+      };
+      window.addEventListener("scrollend", unlock, { once: true });
     }
   };
 
