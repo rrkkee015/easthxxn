@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 
 interface TocItem {
   id: string;
@@ -10,32 +10,42 @@ interface TocItem {
 
 export function TableOfContents({ toc }: { toc: TocItem[] }) {
   const [activeId, setActiveId] = useState<string>("");
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  const rafRef = useRef<number>(0);
 
-  useEffect(() => {
+  const updateActiveId = useCallback(() => {
     const headingElements = toc
       .map(({ id }) => document.getElementById(id))
       .filter(Boolean) as HTMLElement[];
 
     if (headingElements.length === 0) return;
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        }
-      },
-      { rootMargin: "-80px 0px -80% 0px" }
-    );
+    const offset = 100;
+    let current = headingElements[0].id;
 
     for (const el of headingElements) {
-      observerRef.current.observe(el);
+      if (el.getBoundingClientRect().top <= offset) {
+        current = el.id;
+      } else {
+        break;
+      }
     }
 
-    return () => observerRef.current?.disconnect();
+    setActiveId(current);
   }, [toc]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(updateActiveId);
+    };
+
+    updateActiveId();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [updateActiveId]);
 
   const handleClick = (e: React.MouseEvent, id: string) => {
     e.preventDefault();

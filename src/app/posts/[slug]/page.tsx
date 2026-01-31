@@ -66,7 +66,7 @@ export default async function PostPage({ params }: PostPageProps) {
         <CommentSection slug={slug} />
       </article>
       {post.toc.length > 0 && (
-        <aside className="hidden xl:block absolute left-full top-0 ml-8">
+        <aside className="hidden xl:block absolute left-full top-0 h-full ml-8">
           <div className="sticky top-24">
             <TableOfContents toc={post.toc} />
           </div>
