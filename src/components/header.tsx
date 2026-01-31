@@ -20,7 +20,7 @@ export function Header({ categories = [] }: HeaderProps) {
     <header className="border-b border-foreground/10">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-4">
         <Link href="/" className="font-bold text-lg shrink-0">
-          DLOG
+          Dlog
         </Link>
         <div className="ml-auto flex items-center gap-6">
           {categories.length > 0 && (
