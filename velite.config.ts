@@ -20,6 +20,7 @@ export default defineConfig({
           slug: s.path(),
           date: s.isodate(),
           description: s.string().max(300),
+          category: s.string().default("uncategorized"),
           tags: s.array(s.string()).default([]),
           published: s.boolean().default(true),
           body: s.mdx(),

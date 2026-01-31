@@ -5,6 +5,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ScrollRestore } from "@/components/scroll-restore";
 import { Analytics } from "@vercel/analytics/react";
+import { getAllCategories } from "@/lib/categories";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const categories = getAllCategories();
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
@@ -45,8 +48,8 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ScrollRestore />
-          <Header />
-          <main className="flex-1 w-full max-w-2xl mx-auto px-4 py-8">
+          <Header categories={categories} />
+          <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-2 pb-8">
             {children}
           </main>
           <Footer />

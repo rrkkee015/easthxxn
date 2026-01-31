@@ -1,25 +1,52 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 
-export function Header() {
+interface HeaderProps {
+  categories?: string[];
+}
+
+export function Header({ categories = [] }: HeaderProps) {
   const { setTheme } = useTheme();
+  const pathname = usePathname();
+
+  const activeCategory = pathname.startsWith("/categories/")
+    ? decodeURIComponent(pathname.split("/")[2])
+    : null;
 
   return (
     <header className="border-b border-foreground/10">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-bold text-lg">
+      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-4">
+        <Link href="/" className="font-bold text-lg shrink-0">
           DLOG
         </Link>
-        <button
+        <div className="ml-auto flex items-center gap-6">
+          {categories.length > 0 && (
+            <nav className="flex gap-6 overflow-x-auto text-sm">
+              {categories.map((cat) => (
+                <Link
+                  key={cat}
+                  href={`/categories/${encodeURIComponent(cat)}`}
+                  className={`shrink-0 py-1 transition-colors ${
+                    activeCategory === cat
+                      ? "text-foreground font-semibold"
+                      : "text-foreground/50 hover:text-foreground/80"
+                  }`}
+                >
+                  {cat}
+                </Link>
+              ))}
+            </nav>
+          )}
+          <button
           onClick={() =>
             setTheme((prev) => (prev === "dark" ? "light" : "dark"))
           }
-          className="p-2 rounded-md hover:bg-foreground/5 transition-colors"
+          className="shrink-0 p-2 rounded-md hover:bg-foreground/5 transition-colors"
           aria-label="Toggle theme"
         >
-          {/* 다크모드일 때 보이는 해 아이콘 */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="18"
@@ -42,7 +69,6 @@ export function Header() {
             <path d="m6.34 17.66-1.41 1.41" />
             <path d="m19.07 4.93-1.41 1.41" />
           </svg>
-          {/* 라이트모드일 때 보이는 달 아이콘 */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="18"
@@ -58,6 +84,7 @@ export function Header() {
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
           </svg>
         </button>
+        </div>
       </div>
     </header>
   );

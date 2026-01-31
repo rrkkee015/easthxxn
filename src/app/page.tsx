@@ -8,10 +8,6 @@ export default function Home() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-2">US Daily Brief</h1>
-      <p className="text-foreground/60 text-sm mb-8">
-        매일 미국 뉴스를 읽으며 영어 표현을 배워보세요.
-      </p>
       {publishedPosts.length === 0 ? (
         <p className="text-foreground/50">아직 작성된 포스트가 없습니다.</p>
       ) : (

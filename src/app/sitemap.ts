@@ -1,4 +1,5 @@
 import { posts } from "#site/content";
+import { getAllCategories } from "@/lib/categories";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -11,11 +12,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(post.date),
     }));
 
+  const categoryEntries = getAllCategories().map((category) => ({
+    url: `${siteUrl}/categories/${encodeURIComponent(category)}`,
+    lastModified: new Date(),
+  }));
+
   return [
     {
       url: siteUrl,
       lastModified: new Date(),
     },
+    ...categoryEntries,
     ...postEntries,
   ];
 }
