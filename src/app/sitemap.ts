@@ -3,7 +3,7 @@ import { getAllCategories } from "@/lib/categories";
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const siteUrl = "https://example.com";
+  const siteUrl = "https://easthxxn.com";
 
   const postEntries = posts
     .filter((post) => post.published)

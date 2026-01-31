@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | Dlog",
   },
   description: "개발 블로그",
-  metadataBase: new URL("https://example.com"),
+  metadataBase: new URL("https://easthxxn.com"),
 };
 
 export default function RootLayout({
