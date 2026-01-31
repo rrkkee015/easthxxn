@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   },
   description: "개발 블로그",
   metadataBase: new URL("https://easthxxn.com"),
+  verification: {
+    google: "uJAsCRZj9o-wM_KwhnmCBx98vo9oNpA4zrQ3vy7IbIo",
+  },
 };
 
 export default function RootLayout({
