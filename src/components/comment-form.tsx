@@ -69,7 +69,7 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
           rows={3}
           className="w-full resize-none rounded-lg border border-foreground/10 bg-transparent px-3 py-2 text-sm placeholder:text-foreground/30 focus:outline-none focus:ring-1 focus:ring-foreground/20"
         />
-        <span className="absolute bottom-2 right-3 text-xs text-foreground/30">
+        <span className="absolute bottom-2 right-3 text-xs text-foreground/30 pb-2">
           {content.length}/100
         </span>
       </div>
