@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { getCategoryLabel } from "@/lib/categories";
 
 interface HeaderProps {
   categories?: string[];
@@ -13,7 +14,7 @@ export function Header({ categories = [] }: HeaderProps) {
   const pathname = usePathname();
 
   const activeCategory = pathname.startsWith("/categories/")
-    ? decodeURIComponent(pathname.split("/")[2])
+    ? pathname.split("/")[2]
     : null;
 
   return (
@@ -28,14 +29,14 @@ export function Header({ categories = [] }: HeaderProps) {
               {categories.map((cat) => (
                 <Link
                   key={cat}
-                  href={`/categories/${encodeURIComponent(cat)}`}
+                  href={`/categories/${cat}`}
                   className={`shrink-0 py-1 transition-colors ${
                     activeCategory === cat
                       ? "text-foreground font-semibold"
                       : "text-foreground/50 hover:text-foreground/80"
                   }`}
                 >
-                  {cat}
+                  {getCategoryLabel(cat)}
                 </Link>
               ))}
             </nav>

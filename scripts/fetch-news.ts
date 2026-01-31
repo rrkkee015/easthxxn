@@ -155,7 +155,7 @@ function buildMDX(
 title: "US Daily Brief - ${displayDate}"
 date: "${dateStr}"
 description: "${description}"
-category: "뉴스"
+category: "news"
 tags: ["news", "immigration", "employment"]
 published: true
 ---

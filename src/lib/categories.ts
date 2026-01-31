@@ -1,5 +1,14 @@
 import { posts } from "#site/content";
 
+const categoryLabels: Record<string, string> = {
+  dev: "개발",
+  news: "뉴스",
+};
+
+export function getCategoryLabel(category: string): string {
+  return categoryLabels[category] ?? category;
+}
+
 export function getAllCategories(): string[] {
   const categories = new Set<string>();
   for (const post of posts) {
