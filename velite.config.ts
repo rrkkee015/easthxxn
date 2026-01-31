@@ -1,4 +1,5 @@
 import rehypePrettyCode from "rehype-pretty-code";
+import rehypeSlug from "rehype-slug";
 import { defineConfig, s } from "velite";
 
 export default defineConfig({
@@ -27,16 +28,19 @@ export default defineConfig({
         })
         .transform((data) => {
           const slugAsParams = data.slug.split("/").slice(1).join("/");
+          const toc = extractToc(data.body);
           return {
             ...data,
             slug: slugAsParams,
             permalink: `/posts/${slugAsParams}`,
+            toc,
           };
         }),
     },
   },
   mdx: {
     rehypePlugins: [
+      rehypeSlug,
       [
         rehypePrettyCode as any,
         {
@@ -49,3 +53,18 @@ export default defineConfig({
     ],
   },
 });
+
+function extractToc(body: string): { id: string; text: string; level: number }[] {
+  const regex = /\.h([23]),\{id:"([^"]+)",children:"([^"]+)"\}/g;
+  const toc: { id: string; text: string; level: number }[] = [];
+  let match;
+  while ((match = regex.exec(body)) !== null) {
+    const level = parseInt(match[1]);
+    const id = match[2];
+    const text = match[3];
+    if (id && text) {
+      toc.push({ id, text, level });
+    }
+  }
+  return toc;
+}
