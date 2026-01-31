@@ -4,8 +4,6 @@ import { useEffect } from "react";
 
 export function ScrollRestore() {
   useEffect(() => {
-    history.scrollRestoration = "manual";
-
     const saved = sessionStorage.getItem("scrollY");
     if (saved) {
       window.scrollTo({ top: Number(saved), behavior: "smooth" });
