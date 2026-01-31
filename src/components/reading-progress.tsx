@@ -30,7 +30,7 @@ export function ReadingProgress() {
 
   return (
     <div
-      className="fixed top-0 left-0 h-0.5 bg-foreground z-50"
+      className="fixed top-14 left-0 h-0.5 bg-foreground z-50"
       style={{ width: `${progress}%` }}
     />
   );

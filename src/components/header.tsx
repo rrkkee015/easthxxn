@@ -18,7 +18,7 @@ export function Header({ categories = [] }: HeaderProps) {
     : null;
 
   return (
-    <header className="border-b border-foreground/10">
+    <header className="sticky top-0 z-50 border-b border-foreground/10 bg-background/80 backdrop-blur-sm">
       <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-4">
         <Link href="/" className="font-bold text-lg shrink-0">
           easthxxn
