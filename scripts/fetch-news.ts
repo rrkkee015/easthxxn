@@ -220,8 +220,10 @@ async function main() {
   }
 
   // 5. Write MDX file
+  const postsDir = join(process.cwd(), "content", "posts");
+  mkdirSync(postsDir, { recursive: true });
   const fileName = `${dateStr}-us-news.mdx`;
-  const filePath = join(process.cwd(), "content", "posts", fileName);
+  const filePath = join(postsDir, fileName);
 
   if (existsSync(filePath)) {
     console.log(`[Skip] ${fileName} already exists`);
