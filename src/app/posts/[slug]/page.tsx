@@ -1,5 +1,6 @@
 import { posts } from "#site/content";
 import { MDXContent } from "@/components/mdx-components";
+import { CommentSection } from "@/components/comment-section";
 import { formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -60,6 +61,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <div className="prose prose-neutral dark:prose-invert max-w-none">
         <MDXContent code={post.body} />
       </div>
+      <CommentSection slug={slug} />
     </article>
   );
 }
