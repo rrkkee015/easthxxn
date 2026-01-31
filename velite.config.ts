@@ -29,11 +29,13 @@ export default defineConfig({
         .transform((data) => {
           const slugAsParams = data.slug.split("/").slice(1).join("/");
           const toc = extractToc(data.body);
+          const thumbnail = extractFirstImage(data.body);
           return {
             ...data,
             slug: slugAsParams,
             permalink: `/posts/${slugAsParams}`,
             toc,
+            thumbnail,
           };
         }),
     },
@@ -53,6 +55,11 @@ export default defineConfig({
     ],
   },
 });
+
+function extractFirstImage(body: string): string | null {
+  const match = /img,\{src:"([^"]+)"/.exec(body);
+  return match ? match[1] : null;
+}
 
 function extractToc(body: string): { id: string; text: string; level: number }[] {
   const regex = /\.h([23]),\{id:"([^"]+)",children:("([^"]+)"|\["([^"]+)")/g;
