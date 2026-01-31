@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: "easthxxn",
     template: "%s | easthxxn",
   },
-  description: "개발 블로그",
+  description: "기록하고 공유합니다",
   metadataBase: new URL("https://easthxxn.com"),
   verification: {
     google: "uJAsCRZj9o-wM_KwhnmCBx98vo9oNpA4zrQ3vy7IbIo",
