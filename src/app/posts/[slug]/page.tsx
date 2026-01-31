@@ -1,6 +1,7 @@
 import { posts } from "#site/content";
 import { MDXContent } from "@/components/mdx-components";
 import { CommentSection } from "@/components/comment-section";
+import { ReadingProgress } from "@/components/reading-progress";
 import { TableOfContents } from "@/components/table-of-contents";
 import { formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
@@ -43,6 +44,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   return (
     <div className="relative">
+      <ReadingProgress />
       <article className="mt-6">
         <header className="mb-8">
           <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
