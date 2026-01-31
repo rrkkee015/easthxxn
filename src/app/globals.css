@@ -31,6 +31,22 @@ h3[id] {
   scroll-margin-top: 3rem !important;
 }
 
+/* Code block base styles */
+.prose pre {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  background-color: #f6f8fa !important;
+  color: #24292e !important;
+}
+
+.dark .prose pre {
+  background-color: #24292e !important;
+  color: #e6edf3 !important;
+}
+
 /* rehype-pretty-code styles */
 [data-rehype-pretty-code-figure] pre {
   overflow-x: auto;
@@ -46,7 +62,7 @@ h3[id] {
 }
 
 [data-rehype-pretty-code-figure] [data-line] {
-  padding: 0 1rem;
+  padding: 0 0.25rem;
   border-left: 2px solid transparent;
 }
 
@@ -65,6 +81,24 @@ h3[id] {
 
 .dark :not(pre) > code {
   background: #1e293b;
+}
+
+/* Shiki syntax highlighting colors */
+[data-rehype-pretty-code-figure] code span {
+  color: var(--shiki-light) !important;
+}
+
+.dark [data-rehype-pretty-code-figure] code span {
+  color: var(--shiki-dark) !important;
+}
+
+[data-rehype-pretty-code-figure] pre {
+  background-color: #f6f8fa !important;
+}
+
+.dark [data-rehype-pretty-code-figure] pre {
+  background-color: var(--shiki-dark-bg, #24292e) !important;
+  color: #e6edf3 !important;
 }
 
 /* Light/dark theme for code blocks */
