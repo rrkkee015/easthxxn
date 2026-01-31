@@ -45,7 +45,7 @@ export function Header({ categories = [] }: HeaderProps) {
           onClick={() =>
             setTheme((prev) => (prev === "dark" ? "light" : "dark"))
           }
-          className="shrink-0 p-2 rounded-md hover:bg-foreground/5 transition-colors"
+          className="shrink-0 p-2 rounded-md hover:bg-foreground/5 transition-colors cursor-pointer"
           aria-label="Toggle theme"
         >
           <svg
