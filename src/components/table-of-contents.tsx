@@ -30,6 +30,13 @@ export function TableOfContents({ toc }: { toc: TocItem[] }) {
       }
     }
 
+    // 스크롤이 페이지 하단에 도달하면 마지막 헤딩을 활성화
+    const atBottom =
+      window.innerHeight + window.scrollY >= document.body.scrollHeight - 50;
+    if (atBottom) {
+      current = headingElements[headingElements.length - 1].id;
+    }
+
     setActiveId(current);
   }, [toc]);
 
