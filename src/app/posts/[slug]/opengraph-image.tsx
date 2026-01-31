@@ -87,7 +87,7 @@ export default async function OgImage({
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-end",
-              padding: "40px 50px",
+              padding: "50px 50px 60px",
             }}
           >
             <div
