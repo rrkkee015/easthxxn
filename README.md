@@ -33,14 +33,14 @@
 | **Analytics**         | [Vercel Analytics](https://vercel.com/analytics)                                                                              |
 | **Deployment**        | [Vercel](https://vercel.com)                                                                                                  |
 | **Testing**           | [Vitest](https://vitest.dev) + [happy-dom](https://github.com/nicedoc/happy-dom)                                              |
-| **News Automation**   | [OpenAI GPT-4o](https://openai.com) + [DALL-E 3](https://openai.com) + GitHub Actions                                         |
+| **News Automation**   | [OpenAI GPT-4.1 mini](https://openai.com) + [DALL-E 3](https://openai.com) + GitHub Actions                                   |
 
 ## Features
 
 - **MDX 블로그** — Velite 기반 콘텐츠 파이프라인, Zod 스키마로 빌드 타임 검증
 - **카테고리 시스템** — 프론트매터 기반 자동 네비게이션 생성
 - **댓글** — 인증 없는 익명 댓글 (한글 랜덤 닉네임)
-- **뉴스 자동화** — RSS → GPT-4o 요약 → DALL-E 이미지 → MDX 자동 발행 (매일 GitHub Actions)
+- **뉴스 자동화** — RSS → GPT-4.1 mini 요약 → DALL-E 이미지 → MDX 자동 발행 (매일 GitHub Actions)
 - **다크모드** — next-themes + 커스텀 스크롤 복원
 - **SEO** — 동적 sitemap, robots.txt, 메타데이터
 
