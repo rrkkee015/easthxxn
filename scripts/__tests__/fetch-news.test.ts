@@ -1,34 +1,19 @@
 import { describe, it, expect } from "vitest";
-
-function buildMDX(dateStr: string, description: string, body: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  const displayDate = date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  return `---
-title: "US Daily Brief - ${displayDate}"
-date: "${dateStr}"
-description: "${description}"
-category: "뉴스"
-tags: ["news", "immigration", "employment"]
-published: true
----
-
-${body}
-`;
-}
+import { buildMDX, formatDisplayDate, getTodayDateString } from "../news-utils";
 
 describe("buildMDX", () => {
   const dateStr = "2026-01-31";
   const description = "Test description";
   const body = "## Hello World";
 
-  it("includes category field in frontmatter", () => {
+  it("uses 'news' as category", () => {
     const result = buildMDX(dateStr, description, body);
-    expect(result).toContain('category: "뉴스"');
+    expect(result).toContain('category: "news"');
+  });
+
+  it("includes 'tech' in tags", () => {
+    const result = buildMDX(dateStr, description, body);
+    expect(result).toContain('"tech"');
   });
 
   it("has valid frontmatter delimiters", () => {
@@ -55,5 +40,21 @@ describe("buildMDX", () => {
     expect(result).toContain("category:");
     expect(result).toContain("tags:");
     expect(result).toContain("published:");
+  });
+});
+
+describe("formatDisplayDate", () => {
+  it("formats date in English US locale", () => {
+    const result = formatDisplayDate("2026-01-31");
+    expect(result).toContain("January");
+    expect(result).toContain("31");
+    expect(result).toContain("2026");
+  });
+});
+
+describe("getTodayDateString", () => {
+  it("returns YYYY-MM-DD format", () => {
+    const result = getTodayDateString();
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

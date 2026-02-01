@@ -87,6 +87,27 @@ describe("getAllCategories", () => {
   });
 });
 
+describe("getCategoryLabel", () => {
+  let getCategoryLabel: typeof import("@/lib/categories").getCategoryLabel;
+
+  beforeEach(async () => {
+    const mod = await import("@/lib/categories");
+    getCategoryLabel = mod.getCategoryLabel;
+  });
+
+  it("returns '개발' for 'dev'", () => {
+    expect(getCategoryLabel("dev")).toBe("개발");
+  });
+
+  it("returns '뉴스' for 'news'", () => {
+    expect(getCategoryLabel("news")).toBe("뉴스");
+  });
+
+  it("returns the original string for unknown category", () => {
+    expect(getCategoryLabel("unknown")).toBe("unknown");
+  });
+});
+
 describe("getPostsByCategory", () => {
   let getPostsByCategory: typeof import("@/lib/categories").getPostsByCategory;
 

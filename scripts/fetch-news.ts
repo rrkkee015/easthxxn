@@ -3,6 +3,7 @@ import OpenAI from "openai";
 import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
+import { getTodayDateString, formatDisplayDate, buildMDX } from "./news-utils";
 
 const RSS_FEEDS = [
   {
@@ -129,43 +130,6 @@ async function generateImage(
     console.error(`[Image] Failed to generate ${fileName}:`, error);
     return null;
   }
-}
-
-function getTodayDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function formatDisplayDate(dateStr: string): string {
-  const date = new Date(dateStr + "T00:00:00");
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function buildMDX(
-  dateStr: string,
-  description: string,
-  body: string
-): string {
-  const displayDate = formatDisplayDate(dateStr);
-
-  return `---
-title: "US Daily Brief - ${displayDate}"
-date: "${dateStr}"
-description: "${description}"
-category: "news"
-tags: ["news", "immigration", "employment", "tech"]
-published: true
----
-
-${body}
-`;
 }
 
 async function main() {

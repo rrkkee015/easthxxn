@@ -32,6 +32,7 @@
 | **Dark Mode**         | [next-themes](https://github.com/pacocoursey/next-themes)                                                                     |
 | **Analytics**         | [Vercel Analytics](https://vercel.com/analytics)                                                                              |
 | **Deployment**        | [Vercel](https://vercel.com)                                                                                                  |
+| **Testing**           | [Vitest](https://vitest.dev) + [happy-dom](https://github.com/nicedoc/happy-dom)                                              |
 | **News Automation**   | [OpenAI GPT-4o](https://openai.com) + [DALL-E 3](https://openai.com) + GitHub Actions                                         |
 
 ## Features
@@ -46,8 +47,8 @@
 ## Getting Started
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 [http://localhost:3000](http://localhost:3000)에서 확인할 수 있습니다.
