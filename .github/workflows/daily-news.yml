@@ -2,7 +2,7 @@ name: Daily US News Brief
 
 on:
   schedule:
-    # KST 09:00 = UTC 00:00
+    # KST 09:17 = UTC 00:17
     - cron: "17 0 * * *"
   workflow_dispatch: # allow manual trigger
 
