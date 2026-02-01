@@ -54,7 +54,7 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
         <button
           type="button"
           onClick={handleRandomize}
-          className="text-xs text-foreground/50 hover:text-foreground transition-colors"
+          className="text-xs text-foreground/50 hover:text-foreground transition-colors cursor-pointer"
         >
           랜덤 변경
         </button>
@@ -76,7 +76,7 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
       <button
         type="submit"
         disabled={!content.trim() || isSubmitting}
-        className="rounded-lg bg-foreground px-4 py-1.5 text-sm text-background transition-opacity disabled:opacity-40"
+        className="rounded-lg bg-foreground px-4 py-1.5 text-sm text-background transition-opacity disabled:opacity-40 cursor-pointer disabled:cursor-default"
       >
         {isSubmitting ? "등록 중..." : "댓글 남기기"}
       </button>
