@@ -1,16 +1,30 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 export function ScrollRestore() {
   const pathname = usePathname();
+  const isPopNavigation = useRef(false);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      isPopNavigation.current = true;
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     const key = `scrollY:${pathname}`;
-    const saved = sessionStorage.getItem(key);
-    if (saved) {
-      window.scrollTo({ top: Number(saved), behavior: "smooth" });
+
+    if (isPopNavigation.current) {
+      const saved = sessionStorage.getItem(key);
+      if (saved) {
+        window.scrollTo({ top: Number(saved), behavior: "smooth" });
+      }
+      isPopNavigation.current = false;
     }
 
     const handleScroll = () => {
