@@ -25,6 +25,8 @@ export function ScrollRestore() {
         window.scrollTo({ top: Number(saved), behavior: "smooth" });
       }
       isPopNavigation.current = false;
+    } else {
+      sessionStorage.setItem(key, String(window.scrollY));
     }
 
     const handleScroll = () => {

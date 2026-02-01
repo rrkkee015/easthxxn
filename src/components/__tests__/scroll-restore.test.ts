@@ -23,6 +23,19 @@ function saveScroll(pathname: string, scrollY: number) {
   sessionStorage.setItem(key, String(scrollY));
 }
 
+/** 컴포넌트의 useEffect 진입 로직을 재현 */
+function onNavigate(pathname: string, isPopNavigation: boolean, currentScrollY: number) {
+  const key = makeKey(pathname);
+  if (isPopNavigation) {
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      window.scrollTo({ top: Number(saved), behavior: "smooth" });
+    }
+  } else {
+    sessionStorage.setItem(key, String(currentScrollY));
+  }
+}
+
 describe("ScrollRestore", () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -119,6 +132,42 @@ describe("ScrollRestore", () => {
 
       expect(scrollTo).toHaveBeenCalledWith({ top: 300, behavior: "smooth" });
       expect(isPopNavigation).toBe(false);
+    });
+  });
+
+  describe("일반 네비게이션 시 저장값 리셋", () => {
+    it("클릭 네비게이션 시 이전 스크롤 값을 현재 위치(0)로 덮어쓴다", () => {
+      // 1. A 방문, 스크롤 500 저장
+      saveScroll("/posts/a", 500);
+      expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("500");
+
+      // 2. 클릭으로 A 재방문 (스크롤 0에서 시작)
+      onNavigate("/posts/a", false, 0);
+      expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("0");
+    });
+
+    it("홈→A(스크롤)→홈(뒤로)→A(클릭)→홈(뒤로)→A(앞으로) 시 0으로 복원", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      // 1. A 방문, 스크롤 500 저장
+      onNavigate("/posts/a", false, 0);
+      saveScroll("/posts/a", 500);
+
+      // 2. 뒤로가기로 홈
+      onNavigate("/", true, 0);
+
+      // 3. 클릭으로 A 재방문 → 스크롤 0에서 시작, 저장값 리셋
+      onNavigate("/posts/a", false, 0);
+      expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("0");
+
+      // 4. 뒤로가기로 홈
+      onNavigate("/", true, 0);
+
+      // 5. 앞으로가기로 A → popstate, 저장값은 0
+      scrollTo.mockClear();
+      onNavigate("/posts/a", true, 0);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
     });
   });
 });
