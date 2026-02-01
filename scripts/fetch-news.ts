@@ -17,6 +17,10 @@ const RSS_FEEDS = [
     category: "US Employment",
     url: "https://news.google.com/rss/search?q=US+jobs+employment+hiring&hl=en-US&gl=US&ceid=US:en",
   },
+  {
+    category: "US Tech",
+    url: "https://news.google.com/rss/search?q=US+tech+industry+IT+Silicon+Valley&hl=en-US&gl=US&ceid=US:en",
+  },
 ];
 
 const MAX_ARTICLES_PER_FEED = 3;
@@ -156,7 +160,7 @@ title: "US Daily Brief - ${displayDate}"
 date: "${dateStr}"
 description: "${description}"
 category: "news"
-tags: ["news", "immigration", "employment"]
+tags: ["news", "immigration", "employment", "tech"]
 published: true
 ---
 
