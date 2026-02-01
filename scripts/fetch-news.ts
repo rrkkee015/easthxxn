@@ -69,7 +69,7 @@ async function generateSummary(articles: Article[]): Promise<string> {
   console.log("[OpenAI] Generating summary...");
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: "gpt-4.1-mini",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userPrompt },
