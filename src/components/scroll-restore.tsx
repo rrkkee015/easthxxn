@@ -18,11 +18,14 @@ export function ScrollRestore() {
 
   useEffect(() => {
     const key = `scrollY:${pathname}`;
+    let rafId: number | undefined;
 
     if (isPopNavigation.current) {
       const saved = sessionStorage.getItem(key);
       if (saved) {
-        window.scrollTo({ top: Number(saved), behavior: "smooth" });
+        rafId = requestAnimationFrame(() => {
+          window.scrollTo({ top: Number(saved), behavior: "smooth" });
+        });
       }
       isPopNavigation.current = false;
     } else {
@@ -34,7 +37,10 @@ export function ScrollRestore() {
     };
 
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      if (rafId !== undefined) cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [pathname]);
 
   return null;

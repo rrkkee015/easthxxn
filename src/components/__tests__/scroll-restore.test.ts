@@ -14,7 +14,9 @@ function restoreScroll(pathname: string) {
   const key = makeKey(pathname);
   const saved = sessionStorage.getItem(key);
   if (saved) {
-    window.scrollTo({ top: Number(saved), behavior: "smooth" });
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: Number(saved), behavior: "smooth" });
+    });
   }
 }
 
@@ -29,7 +31,9 @@ function onNavigate(pathname: string, isPopNavigation: boolean, currentScrollY: 
   if (isPopNavigation) {
     const saved = sessionStorage.getItem(key);
     if (saved) {
-      window.scrollTo({ top: Number(saved), behavior: "smooth" });
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: Number(saved), behavior: "smooth" });
+      });
     }
   } else {
     sessionStorage.setItem(key, String(currentScrollY));
@@ -40,6 +44,13 @@ describe("ScrollRestore", () => {
   beforeEach(() => {
     sessionStorage.clear();
     vi.restoreAllMocks();
+
+    // rAF를 동기 실행하도록 mock
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
   });
 
   describe("키 생성", () => {
