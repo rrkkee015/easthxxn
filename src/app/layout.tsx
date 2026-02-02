@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Header } from "@/components/header";
@@ -39,16 +40,13 @@ export default function RootLayout({
 
   return (
     <html lang="ko" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `history.scrollRestoration="manual"`,
-          }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col overflow-x-clip`}
       >
+        <Script
+          id="scroll-restoration"
+          strategy="beforeInteractive"
+        >{`history.scrollRestoration="manual"`}</Script>
         <ThemeProvider>
           <ScrollRestore />
           <Header categories={categories} />
