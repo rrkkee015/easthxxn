@@ -25,19 +25,48 @@ function saveScroll(pathname: string, scrollY: number) {
   sessionStorage.setItem(key, String(scrollY));
 }
 
-/** 컴포넌트의 useEffect 진입 로직을 재현 */
+/**
+ * 컴포넌트의 lifecycle을 재현하는 시뮬레이터.
+ * useLayoutEffect cleanup → useLayoutEffect setup → useEffect 순서를 모사한다.
+ */
+let _currentPathname: string | null = null;
+let _lastScrollY = 0;
+let _cachedPosition: number | null = null;
+
 function onNavigate(pathname: string, isPopNavigation: boolean) {
+  // --- useLayoutEffect cleanup (이전 경로) ---
+  if (_currentPathname !== null) {
+    const oldKey = makeKey(_currentPathname);
+    sessionStorage.setItem(oldKey, String(_lastScrollY));
+  }
+
+  // --- useLayoutEffect setup (새 경로) ---
   const key = makeKey(pathname);
+  _cachedPosition = (() => {
+    const v = sessionStorage.getItem(key);
+    return v !== null ? Number(v) : null;
+  })();
+  _currentPathname = pathname;
+
+  // --- useEffect ---
   if (isPopNavigation) {
-    const saved = sessionStorage.getItem(key);
-    if (saved) {
+    if (_cachedPosition !== null) {
       requestAnimationFrame(() => {
-        window.scrollTo({ top: Number(saved), behavior: "smooth" });
+        window.scrollTo({ top: _cachedPosition!, behavior: "smooth" });
       });
     }
   } else {
     sessionStorage.setItem(key, "0");
     window.scrollTo({ top: 0 });
+    _lastScrollY = 0;
+  }
+}
+
+/** scroll listener를 시뮬레이션: 사용자가 스크롤했을 때 호출 */
+function simulateUserScroll(scrollY: number) {
+  _lastScrollY = scrollY;
+  if (_currentPathname !== null) {
+    sessionStorage.setItem(makeKey(_currentPathname), String(scrollY));
   }
 }
 
@@ -45,6 +74,11 @@ describe("ScrollRestore", () => {
   beforeEach(() => {
     sessionStorage.clear();
     vi.restoreAllMocks();
+
+    // 시뮬레이터 상태 초기화
+    _currentPathname = null;
+    _lastScrollY = 0;
+    _cachedPosition = null;
 
     // rAF를 동기 실행하도록 mock
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
@@ -163,9 +197,11 @@ describe("ScrollRestore", () => {
       window.scrollTo = scrollTo;
 
       // 홈에서 새로고침 후 스크롤 300
-      saveScroll("/", 300);
+      onNavigate("/", false);
+      simulateUserScroll(300);
 
       // 클릭으로 글 페이지 이동
+      scrollTo.mockClear();
       onNavigate("/posts/hello", false);
 
       // 새 페이지는 맨 위로 스크롤되어야 한다
@@ -190,8 +226,8 @@ describe("ScrollRestore", () => {
       onNavigate("/posts/a", false);
       expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
 
-      // 2. 스크롤 500 저장 (scroll listener 시뮬레이션)
-      saveScroll("/posts/a", 500);
+      // 2. 스크롤 500 (scroll listener 시뮬레이션)
+      simulateUserScroll(500);
 
       // 3. 뒤로가기로 홈
       onNavigate("/", true);
@@ -207,6 +243,81 @@ describe("ScrollRestore", () => {
       scrollTo.mockClear();
       onNavigate("/posts/a", true);
       expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  describe("초기 세션 뒤로가기 복원", () => {
+    it("홈 스크롤 → 글 클릭 → 뒤로가기 시 홈 스크롤이 복원된다", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      // 1. 초기 세션: 홈 방문
+      onNavigate("/", false);
+
+      // 2. 홈에서 스크롤 300
+      simulateUserScroll(300);
+
+      // 3. 클릭으로 글 페이지 이동
+      onNavigate("/posts/hello", false);
+
+      // 4. 뒤로가기
+      scrollTo.mockClear();
+      onNavigate("/", true);
+
+      // 홈의 스크롤 300이 복원되어야 한다 (0이 아님!)
+      expect(scrollTo).toHaveBeenCalledWith({ top: 300, behavior: "smooth" });
+    });
+
+    it("홈 스크롤 → 글 클릭 → 글에서 스크롤 → 뒤로가기 시 홈 복원, 다시 앞으로 시 글 복원", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      // 1. 홈 방문, 스크롤 200
+      onNavigate("/", false);
+      simulateUserScroll(200);
+
+      // 2. 클릭으로 글 이동
+      onNavigate("/posts/a", false);
+      simulateUserScroll(800);
+
+      // 3. 뒤로가기 → 홈 200 복원
+      scrollTo.mockClear();
+      onNavigate("/", true);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 200, behavior: "smooth" });
+
+      // 4. 앞으로가기 → 글 800 복원
+      simulateUserScroll(200); // 복원 결과 시뮬레이션
+      scrollTo.mockClear();
+      onNavigate("/posts/a", true);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 800, behavior: "smooth" });
+    });
+
+    it("여러 페이지 순회 후 뒤로가기 시 각 페이지 스크롤이 독립 복원된다", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      // 홈 → 스크롤 100
+      onNavigate("/", false);
+      simulateUserScroll(100);
+
+      // 글A → 스크롤 400
+      onNavigate("/posts/a", false);
+      simulateUserScroll(400);
+
+      // 글B → 스크롤 600
+      onNavigate("/posts/b", false);
+      simulateUserScroll(600);
+
+      // 뒤로: 글A 400 복원
+      scrollTo.mockClear();
+      onNavigate("/posts/a", true);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 400, behavior: "smooth" });
+
+      // 뒤로: 홈 100 복원
+      simulateUserScroll(400);
+      scrollTo.mockClear();
+      onNavigate("/", true);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 100, behavior: "smooth" });
     });
   });
 });
