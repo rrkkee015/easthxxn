@@ -29,7 +29,8 @@ export function ScrollRestore() {
       }
       isPopNavigation.current = false;
     } else {
-      sessionStorage.setItem(key, String(window.scrollY));
+      sessionStorage.setItem(key, "0");
+      window.scrollTo({ top: 0 });
     }
 
     const handleScroll = () => {

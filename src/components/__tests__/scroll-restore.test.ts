@@ -26,7 +26,7 @@ function saveScroll(pathname: string, scrollY: number) {
 }
 
 /** 컴포넌트의 useEffect 진입 로직을 재현 */
-function onNavigate(pathname: string, isPopNavigation: boolean, currentScrollY: number) {
+function onNavigate(pathname: string, isPopNavigation: boolean) {
   const key = makeKey(pathname);
   if (isPopNavigation) {
     const saved = sessionStorage.getItem(key);
@@ -36,7 +36,8 @@ function onNavigate(pathname: string, isPopNavigation: boolean, currentScrollY: 
       });
     }
   } else {
-    sessionStorage.setItem(key, String(currentScrollY));
+    sessionStorage.setItem(key, "0");
+    window.scrollTo({ top: 0 });
   }
 }
 
@@ -118,7 +119,7 @@ describe("ScrollRestore", () => {
     it("popstate가 아닌 경우 복원하지 않는다", () => {
       const scrollTo = vi.fn();
       window.scrollTo = scrollTo;
-      let isPopNavigation = false;
+      const isPopNavigation = false;
 
       sessionStorage.setItem("scrollY:/posts/test", "300");
 
@@ -146,38 +147,65 @@ describe("ScrollRestore", () => {
     });
   });
 
-  describe("일반 네비게이션 시 저장값 리셋", () => {
-    it("클릭 네비게이션 시 이전 스크롤 값을 현재 위치(0)로 덮어쓴다", () => {
+  describe("클릭 네비게이션 시 스크롤 초기화", () => {
+    it("클릭 네비게이션 시 저장값을 0으로 리셋한다", () => {
       // 1. A 방문, 스크롤 500 저장
       saveScroll("/posts/a", 500);
       expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("500");
 
-      // 2. 클릭으로 A 재방문 (스크롤 0에서 시작)
-      onNavigate("/posts/a", false, 0);
+      // 2. 클릭으로 A 재방문
+      onNavigate("/posts/a", false);
       expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("0");
     });
 
-    it("홈→A(스크롤)→홈(뒤로)→A(클릭)→홈(뒤로)→A(앞으로) 시 0으로 복원", () => {
+    it("새로고침 후 스크롤한 뒤 클릭 이동 시 새 페이지를 맨 위에서 시작한다", () => {
       const scrollTo = vi.fn();
       window.scrollTo = scrollTo;
 
-      // 1. A 방문, 스크롤 500 저장
-      onNavigate("/posts/a", false, 0);
+      // 홈에서 새로고침 후 스크롤 300
+      saveScroll("/", 300);
+
+      // 클릭으로 글 페이지 이동
+      onNavigate("/posts/hello", false);
+
+      // 새 페이지는 맨 위로 스크롤되어야 한다
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+      expect(sessionStorage.getItem("scrollY:/posts/hello")).toBe("0");
+    });
+
+    it("클릭 네비게이션 시 scrollTo(0)을 호출한다", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      onNavigate("/posts/new", false);
+
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+    });
+
+    it("popstate 복원과 클릭 초기화는 서로 간섭하지 않는다", () => {
+      const scrollTo = vi.fn();
+      window.scrollTo = scrollTo;
+
+      // 1. 클릭으로 A 방문 → 0으로 초기화
+      onNavigate("/posts/a", false);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+
+      // 2. 스크롤 500 저장 (scroll listener 시뮬레이션)
       saveScroll("/posts/a", 500);
 
-      // 2. 뒤로가기로 홈
-      onNavigate("/", true, 0);
+      // 3. 뒤로가기로 홈
+      onNavigate("/", true);
 
-      // 3. 클릭으로 A 재방문 → 스크롤 0에서 시작, 저장값 리셋
-      onNavigate("/posts/a", false, 0);
+      // 4. 클릭으로 A 재방문 → 저장값 리셋, 0으로 초기화
+      onNavigate("/posts/a", false);
       expect(sessionStorage.getItem("scrollY:/posts/a")).toBe("0");
 
-      // 4. 뒤로가기로 홈
-      onNavigate("/", true, 0);
+      // 5. 뒤로가기로 홈
+      onNavigate("/", true);
 
-      // 5. 앞으로가기로 A → popstate, 저장값은 0
+      // 6. 앞으로가기로 A → popstate, 저장값 0이므로 smooth 스크롤 0
       scrollTo.mockClear();
-      onNavigate("/posts/a", true, 0);
+      onNavigate("/posts/a", true);
       expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
     });
   });
