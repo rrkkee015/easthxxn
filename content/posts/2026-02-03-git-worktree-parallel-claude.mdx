@@ -1,0 +1,185 @@
+---
+title: "git worktree로 Claude Code 병렬 실행하기"
+date: "2026-02-03T09:00:00"
+description: "Claude Code 병렬 실행할 때 repo를 여러 개 clone하고 있었다면, git worktree를 한번 써보자."
+category: "dev"
+tags: ["git", "worktree", "claude-code", "productivity"]
+published: true
+---
+
+![git worktree 병렬 작업](/images/posts/git-worktree-parallel-claude.png)
+
+## 문제: repo를 두 번 clone하고 있었다
+
+Claude Code로 두 가지 기능을 동시에 작업하고 싶었다.
+
+터미널 두 개에서 각각 Claude Code를 돌리려면 작업 디렉토리가 분리되어야 하니까, repo를 두 번 clone했다.
+
+근데 이게 관리가 지옥이다.
+
+remote 설정이 따로 놀고, 한쪽에서 만든 branch가 다른 쪽에서 안 보이고, config도 두 벌 관리해야 한다.
+
+`git worktree`라는 게 있더라.
+
+## git worktree란
+
+하나의 `.git` 디렉토리를 공유하면서 여러 개의 working tree를 만드는 기능이다.
+
+clone을 여러 번 하는 것과 핵심 차이는 `.git`이 하나라는 점이다.
+
+refs, stash, config, hooks 전부 공유된다.
+
+branch를 하나 만들면 모든 worktree에서 즉시 보이고, remote도 한 번만 설정하면 된다.
+
+## 기본 사용법
+
+### worktree 생성
+
+```bash
+git worktree add ../feature-a -b feature-a
+```
+
+현재 repo 바깥에 `feature-a`라는 디렉토리를 만들고, `feature-a` 브랜치를 새로 생성해서 체크아웃한다.
+
+`-b` 없이 기존 브랜치를 체크아웃할 수도 있다:
+
+```bash
+git worktree add ../hotfix hotfix/login-bug
+```
+
+### worktree 목록 확인
+
+```bash
+git worktree list
+```
+
+```
+/Users/me/my-project        abc1234 [main]
+/Users/me/feature-a          def5678 [feature-a]
+```
+
+어떤 worktree가 어떤 브랜치를 보고 있는지 한눈에 보인다.
+
+### worktree 삭제
+
+```bash
+git worktree remove ../feature-a
+```
+
+작업이 끝난 worktree를 정리한다.
+
+브랜치는 삭제되지 않으니 merge 후 별도로 `git branch -d feature-a`를 해줘야 한다.
+
+## 실전: Claude Code 병렬 세팅
+
+실제로 두 가지 기능을 동시에 작업하는 흐름이다.
+
+### 1. feature-a 작업용 worktree 생성
+
+```bash
+# 메인 repo에서
+git worktree add ../my-project-feature-a -b feature-a
+```
+
+### 2. 터미널 하나 더 열어서 feature-b worktree 생성
+
+```bash
+# 메인 repo에서
+git worktree add ../my-project-feature-b -b feature-b
+```
+
+### 3. 각 터미널에서 Claude Code 실행
+
+```bash
+# 터미널 1
+cd ../my-project-feature-a
+claude
+
+# 터미널 2
+cd ../my-project-feature-b
+claude
+```
+
+각 Claude Code 인스턴스가 독립된 working tree에서 작업한다.
+
+파일 충돌 없이 동시에 코드를 수정할 수 있다.
+
+### 4. 작업 끝나면 merge하고 정리
+
+```bash
+# 메인 repo로 돌아와서
+cd ../my-project
+git merge feature-a
+git merge feature-b
+git branch -d feature-a feature-b
+git worktree remove ../my-project-feature-a
+git worktree remove ../my-project-feature-b
+```
+
+worktree 정리까지 한 번에 끝난다.
+
+## clone 두 개 vs worktree
+
+| 항목 | clone 두 개 | worktree |
+|------|------------|----------|
+| 디스크 사용량 | `.git` 두 벌 (큰 repo면 수 GB) | `.git` 한 벌 공유 |
+| remote 설정 | 각각 따로 관리 | 한 번만 설정 |
+| branch 동기화 | `fetch` 따로 해야 보임 | 즉시 공유 |
+| stash | 각 clone에 따로 저장 | 공유 |
+| hooks/config | 두 벌 관리 | 한 벌 |
+| 생성 속도 | 전체 다운로드 | 거의 즉시 |
+
+큰 repo일수록 worktree의 이점이 커진다.
+
+clone은 `.git` 디렉토리를 통째로 복제하니까 시간도 오래 걸리고 디스크도 잡아먹는다.
+
+worktree는 working tree만 새로 만들어서 거의 즉시 생성된다.
+
+## 주의할 점
+
+### 같은 브랜치 동시 체크아웃 불가
+
+```bash
+git worktree add ../another main
+# fatal: 'main' is already checked out at '/Users/me/my-project'
+```
+
+하나의 브랜치는 하나의 worktree에서만 체크아웃할 수 있다.
+
+이건 의도된 제약이다.
+
+같은 브랜치를 두 곳에서 동시에 수정하면 index가 꼬이니까.
+
+### worktree 안 지우고 branch 삭제하면 꼬인다
+
+```bash
+git branch -d feature-a  # worktree가 아직 살아있는데 branch를 삭제
+```
+
+이러면 worktree가 존재하지 않는 브랜치를 가리키게 된다.
+
+항상 `git worktree remove` → `git branch -d` 순서로 정리하자.
+
+### IDE 설정
+
+worktree별로 디렉토리가 다르니까 IDE에서 각각 열어야 한다.
+
+VS Code 기준으로 워크스페이스 설정(`.vscode/`)이 worktree에 없을 수 있다.
+
+필요하면 심볼릭 링크로 공유하거나, 각 worktree에 복사해두자.
+
+### node_modules
+
+Node.js 프로젝트라면 worktree마다 `node_modules`가 필요하다.
+
+worktree 생성 후 `pnpm install`을 한 번 돌려줘야 한다.
+
+pnpm은 content-addressable store 덕분에 두 번째부터는 빠르다.
+
+## 정리
+
+Claude Code를 병렬로 돌릴 때 repo를 여러 번 clone하는 건 비효율적이다.
+
+`git worktree`로 working tree만 분리하면 `.git`을 공유하니까 디스크, 동기화, 설정 관리 전부 깔끔해진다.
+
+`add` → 작업 → `merge` → `remove`. 이게 전부다.
