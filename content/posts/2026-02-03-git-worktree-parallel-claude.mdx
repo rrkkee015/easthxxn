@@ -9,17 +9,17 @@ published: true
 
 ![git worktree 병렬 작업](/images/posts/git-worktree-parallel-claude.png)
 
-## 문제: repo를 두 번 clone하고 있었다
+## 문제: repo를 여러 번 clone하고 있었다
 
-Claude Code로 두 가지 기능을 동시에 작업하고 싶었다.
+Claude Code를 병렬적으로 작업하고 싶었다.
 
-터미널 두 개에서 각각 Claude Code를 돌리려면 작업 디렉토리가 분리되어야 하니까, repo를 두 번 clone했다.
+터미널 여러 개를 각각 Claude Code를 돌리려면 작업 디렉토리가 분리되어야 하니까, repo를 여러 개 clone했다.
 
 근데 이게 관리가 지옥이다.
 
-remote 설정이 따로 놀고, 한쪽에서 만든 branch가 다른 쪽에서 안 보이고, config도 두 벌 관리해야 한다.
+remote 설정이 따로 놀고, 한쪽에서 만든 branch가 다른 쪽에서 안 보이고, config도 여러 개 관리해야 한다.
 
-`git worktree`라는 게 있더라.
+모두가 이런 불편함을 겪고 있는건가 해서 찾아보니 `git worktree`라는 게 있더라.
 
 ## git worktree란
 
@@ -72,7 +72,7 @@ git worktree remove ../feature-a
 
 ## 실전: Claude Code 병렬 세팅
 
-실제로 두 가지 기능을 동시에 작업하는 흐름이다.
+실제로 여러 개 Claude Code를 동시에 작업하는 흐름이다.
 
 ### 1. feature-a 작업용 worktree 생성
 
@@ -118,16 +118,16 @@ git worktree remove ../my-project-feature-b
 
 worktree 정리까지 한 번에 끝난다.
 
-## clone 두 개 vs worktree
+## clone 여러 개 vs worktree
 
-| 항목 | clone 두 개 | worktree |
-|------|------------|----------|
-| 디스크 사용량 | `.git` 두 벌 (큰 repo면 수 GB) | `.git` 한 벌 공유 |
-| remote 설정 | 각각 따로 관리 | 한 번만 설정 |
-| branch 동기화 | `fetch` 따로 해야 보임 | 즉시 공유 |
-| stash | 각 clone에 따로 저장 | 공유 |
-| hooks/config | 두 벌 관리 | 한 벌 |
-| 생성 속도 | 전체 다운로드 | 거의 즉시 |
+| 항목          | clone 여러 개                    | worktree          |
+| ------------- | -------------------------------- | ----------------- |
+| 디스크 사용량 | `.git` 여러 개 (큰 repo면 수 GB) | `.git` 한 벌 공유 |
+| remote 설정   | 각각 따로 관리                   | 한 번만 설정      |
+| branch 동기화 | `fetch` 따로 해야 보임           | 즉시 공유         |
+| stash         | 각 clone에 따로 저장             | 공유              |
+| hooks/config  | 여러 개 관리                     | 한 벌             |
+| 생성 속도     | 전체 다운로드                    | 거의 즉시         |
 
 큰 repo일수록 worktree의 이점이 커진다.
 
