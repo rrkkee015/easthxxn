@@ -12,14 +12,33 @@ export function generateStaticParams() {
   }));
 }
 
+const siteUrl = "https://easthxxn.com";
+
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const label = getCategoryLabel(category);
+  const description = `${label} 카테고리의 글 목록`;
+  const categoryUrl = `${siteUrl}/categories/${category}`;
+
   return {
     title: label,
-    description: `${label} 카테고리의 글 목록`,
+    description,
+    alternates: {
+      canonical: categoryUrl,
+    },
+    openGraph: {
+      title: label,
+      description,
+      type: "website",
+      url: categoryUrl,
+    },
+    twitter: {
+      card: "summary",
+      title: label,
+      description,
+    },
   };
 }
 

@@ -19,15 +19,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://easthxxn.com";
+
 export const metadata: Metadata = {
   title: {
     default: "easthxxn",
     template: "%s | easthxxn",
   },
   description: "기록하고 공유합니다",
-  metadataBase: new URL("https://easthxxn.com"),
+  metadataBase: new URL(siteUrl),
   verification: {
     google: "uJAsCRZj9o-wM_KwhnmCBx98vo9oNpA4zrQ3vy7IbIo",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    url: siteUrl,
+    siteName: "easthxxn",
+    title: "easthxxn",
+    description: "기록하고 공유합니다",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "easthxxn",
+    description: "기록하고 공유합니다",
   },
 };
 

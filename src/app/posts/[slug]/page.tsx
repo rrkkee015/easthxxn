@@ -21,6 +21,8 @@ export async function generateStaticParams() {
     .map((post) => ({ slug: post.slug }));
 }
 
+const siteUrl = "https://easthxxn.com";
+
 export async function generateMetadata({
   params,
 }: PostPageProps): Promise<Metadata> {
@@ -28,13 +30,27 @@ export async function generateMetadata({
   const post = getPostBySlug(slug);
   if (!post) return {};
 
+  const postUrl = `${siteUrl}/posts/${slug}`;
+
   return {
     title: post.title,
     description: post.description,
+    alternates: {
+      canonical: postUrl,
+    },
     openGraph: {
       title: post.title,
       description: post.description,
       type: "article",
+      url: postUrl,
+      publishedTime: post.date,
+      authors: ["easthxxn"],
+      tags: post.tags,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
     },
   };
 }
