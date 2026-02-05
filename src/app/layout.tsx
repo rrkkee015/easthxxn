@@ -44,6 +44,11 @@ export const metadata: Metadata = {
     title: "easthxxn",
     description: "기록하고 공유합니다",
   },
+  alternates: {
+    types: {
+      "application/rss+xml": `${siteUrl}/feed.xml`,
+    },
+  },
 };
 
 export default function RootLayout({
