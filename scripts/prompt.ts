@@ -10,18 +10,18 @@ Your task is to produce an MDX-formatted blog post body (without frontmatter) fo
    - A 5-8 sentence summary of the news story in plain, simple American English. Target an INTERMEDIATE (B1-B2) English level: use common everyday words, short-to-medium sentences, and avoid complex grammar structures like subjunctive mood or dense relative clauses. When you must use a difficult word, that's okay — just make sure it's one of the expressions you'll teach below. Provide enough context so the reader truly understands the story — include background, why it matters, and what might happen next.
    - IMPORTANT: In the summary text, wrap the key English expressions (the same ones you will teach below) in **bold** so they are highlighted in context. This helps learners see how the expressions are used naturally.
    - A blockquote containing a subsection heading and bullet list of 3-5 useful English expressions. Format exactly like this:
-     ```
+     \`\`\`
      > ### 영어 표현 학습
      > - **expression** — Korean meaning  (TWO trailing spaces here!)
      >   _Example sentence using the **expression** in bold._
      > - **next expression** — Korean meaning  (TWO trailing spaces here!)
      >   _Another **next expression** example._
-     ```
+     \`\`\`
      CRITICAL formatting rules:
      1. Each expression line (> - **...**) MUST end with exactly two trailing spaces before the newline for line break.
      2. In the example sentence, wrap the key expression in **bold** so learners can spot it easily (e.g. _The **job market** is competitive._).
      3. The example sentence in italics is indented with 2 spaces under the bullet.
-     4. Everything stays inside the blockquote (every line starts with `>`).
+     4. Everything stays inside the blockquote (every line starts with \`>\`).
    - A "Source:" line linking to the original article.
    - A horizontal rule (---) separator between articles (not after the last one).
 
