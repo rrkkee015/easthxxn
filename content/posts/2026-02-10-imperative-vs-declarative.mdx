@@ -1,0 +1,656 @@
+---
+title: "명령형 vs 선언형 — 어떻게(HOW)에서 무엇을(WHAT)로"
+date: "2026-02-10T09:00:00"
+description: "명령형과 선언형의 본질적 차이를 코드로 비교한다. RxJS, React, SQL, Terraform까지 — 소프트웨어 엔지니어링 전반에서 선언형이 복잡성을 다루는 방식."
+category: "dev"
+tags: ["declarative", "imperative", "rxjs", "reactive-programming", "software-engineering"]
+published: true
+---
+
+![명령형 vs 선언형 프로그래밍](/images/posts/imperative-vs-declarative.png)
+
+코드를 짤 때 "어떻게(HOW)"를 기술하느냐, "무엇을(WHAT)"을 기술하느냐.
+
+이 차이가 프로그래밍 패러다임을 가른다.
+
+SQL을 쓸 때 인덱스 B-tree를 직접 순회하지 않는 것처럼, 점점 더 많은 영역이 "무엇을"만 선언하는 방향으로 가고 있다.
+
+## 명령형 프로그래밍이란?
+
+HOW를 기술하는 방식이다.
+
+"이것을 해라, 그 다음 저것을 해라, 이 조건이면 이쪽으로 가라."
+
+컴퓨터에게 한 단계씩 절차를 지시한다.
+
+### 예시
+
+배열에서 짝수만 골라 제곱한 합을 구하는 코드다.
+
+```ts
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+let sum = 0;
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] % 2 === 0) {
+    sum += numbers[i] ** 2;
+  }
+}
+console.log(sum); // 220
+```
+
+`i`를 0부터 시작해서 1씩 올리고, 짝수인지 확인하고, 맞으면 제곱해서 더한다.
+
+**모든 절차를 내가 기술**하고 있다.
+
+Angular에서 검색 기능을 명령형으로 구현하면 이렇게 된다:
+
+```ts
+@Component({
+  template: `<input (input)="onSearch($event)" />
+             <div *ngFor="let item of results">{{ item.name }}</div>`
+})
+export class SearchComponent implements OnDestroy {
+  results: Item[] = [];
+  private subscription?: Subscription;
+  private searchTimeout?: ReturnType<typeof setTimeout>;
+
+  onSearch(event: Event) {
+    const query = (event.target as HTMLInputElement).value;
+
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    this.searchTimeout = setTimeout(() => {
+      this.subscription?.unsubscribe();
+      this.subscription = this.http.get<Item[]>(`/api/search?q=${query}`)
+        .subscribe({
+          next: (data) => { this.results = data; },
+          error: (err) => { console.error(err); }
+        });
+    }, 300);
+  }
+
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+  }
+}
+```
+
+debounce를 `setTimeout`으로 직접 구현하고, 이전 요청을 수동으로 `unsubscribe`하고, 컴포넌트 파괴 시 정리도 직접 한다.
+
+**모든 생명주기를 내가 관리**하고 있다.
+
+### 장점
+
+디버깅이 쉽다.
+
+한 줄씩 따라가면 어디서 뭐가 바뀌는지 보인다.
+
+입문자에게 직관적이고, 예외 처리를 원하는 곳에 명시적으로 넣을 수 있다.
+
+### 단점
+
+상태 변이가 흩어진다.
+
+`results`, `subscription`, `searchTimeout` — 상태가 여기저기 흩어져 있고, 전체 코드를 읽어야 흐름이 파악된다.
+
+비동기가 끼면 복잡도가 급증한다.
+
+타이머 정리, 구독 해제, 경쟁 조건 처리를 전부 수동으로 해야 한다.
+
+## 선언형 프로그래밍이란?
+
+WHAT을 기술하는 방식이다.
+
+"나는 이런 결과를 원한다."
+
+어떻게 도달하는지는 런타임이나 프레임워크에 위임한다.
+
+### 예시
+
+같은 "짝수의 제곱합" 문제다.
+
+```ts
+const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+const sum = numbers
+  .filter(n => n % 2 === 0)
+  .map(n => n ** 2)
+  .reduce((acc, n) => acc + n, 0);
+
+console.log(sum); // 220
+```
+
+"짝수를 거르고, 제곱하고, 합친다."
+
+**의도가 코드에 그대로 드러난다.**
+
+루프 변수도 없고, 중간 상태 변이도 없다.
+
+같은 검색 기능을 선언형으로 바꾸면:
+
+```ts
+@Component({
+  template: `<input #searchInput />
+             <div *ngFor="let item of results$ | async">{{ item.name }}</div>`
+})
+export class SearchComponent implements OnInit {
+  private search$ = new Subject<string>();
+
+  results$ = this.search$.pipe(
+    debounceTime(300),
+    distinctUntilChanged(),
+    switchMap(query => this.http.get<Item[]>(`/api/search?q=${query}`)),
+    catchError(() => of([]))
+  );
+
+  @ViewChild('searchInput', { static: true }) input!: ElementRef;
+
+  ngOnInit() {
+    fromEvent(this.input.nativeElement, 'input').pipe(
+      map((e: Event) => (e.target as HTMLInputElement).value)
+    ).subscribe(this.search$);
+  }
+}
+```
+
+`debounceTime(300)` — 300ms debounce를 "선언"했다.
+
+`distinctUntilChanged()` — 같은 값이면 스킵을 "선언"했다.
+
+`switchMap` — 이전 요청을 자동 취소하고 새 요청으로 전환을 "선언"했다.
+
+`async` 파이프 — 구독과 해제를 Angular에 "위임"했다.
+
+`setTimeout`, `clearTimeout`, `unsubscribe` 전부 사라졌다.
+
+**무엇을 원하는지만 남았다.**
+
+### 장점
+
+의도가 코드에 드러난다.
+
+"300ms debounce 후 중복 제거하고 검색한다"가 코드를 읽는 것만으로 파악된다.
+
+상태 변이가 없다.
+
+`results`라는 변수에 직접 할당하는 코드가 없다. 스트림이 흐를 뿐이다.
+
+합성이 자연스럽다.
+
+오퍼레이터를 파이프로 연결하면 새로운 동작이 만들어진다.
+
+### 단점
+
+디버깅이 어렵다.
+
+`tap(console.log)`를 중간에 끼워넣어야 흐름이 보인다.
+
+러닝 커브가 있다.
+
+`switchMap`과 `mergeMap`의 차이를 모르면 코드를 읽을 수 없다.
+
+과하면 오히려 난독이다.
+
+오퍼레이터 10개 체이닝이 for문보다 읽기 좋다는 건 거짓말이다.
+
+적절한 분리가 답이다.
+
+## RxJS — 선언형 리액티브 프로그래밍의 정수
+
+RxJS는 명령형 vs 선언형을 가장 극명하게 보여주는 라이브러리다.
+
+### 무엇인지
+
+Observable은 시간 축 위의 값 스트림이다.
+
+`Array.prototype`의 `filter`, `map`, `reduce`를 시간 축으로 확장한 거라고 생각하면 된다.
+
+배열은 공간에 값이 나열되어 있고, Observable은 시간에 값이 나열되어 있다.
+
+```
+Array:       [1, 2, 3, 4, 5]        → 공간 위의 값
+Observable:  --1--2--3--4--5-->     → 시간 위의 값
+```
+
+Observer는 이 스트림을 구독해서 값이 흘러올 때마다 반응하고, Operator는 스트림을 변환하는 순수 함수다.
+
+### 왜 선언형인지
+
+`filter`, `map`이 "무엇을" 선언하면 RxJS 스케줄러가 "어떻게" 실행한다.
+
+내가 하는 일은 파이프라인을 조립하는 것뿐이다.
+
+실행 타이밍, 구독 관리, 비동기 스케줄링은 RxJS가 처리한다.
+
+이게 선언형의 핵심이다.
+
+**제어를 위임한다.**
+
+### 잘 사용한 예시
+
+#### 패턴 A: 검색 debounce + switchMap
+
+```ts
+// 검색어 입력 → debounce → 중복 제거 → API 호출 → 결과
+searchResults$ = this.searchControl.valueChanges.pipe(
+  debounceTime(300),
+  distinctUntilChanged(),
+  filter(query => query.length >= 2),
+  switchMap(query => this.api.search(query).pipe(
+    catchError(() => of({ results: [] }))
+  )),
+  map(response => response.results)
+);
+```
+
+템플릿에서 `searchResults$ | async`로 바인딩하면 끝이다.
+
+subscription 관리가 제로다.
+
+`switchMap`이 이전 요청을 자동 취소하니까 race condition도 없다.
+
+#### 패턴 B: combineLatest로 뷰모델 합성
+
+```ts
+// 여러 소스를 합성해서 하나의 뷰모델로
+vm$ = combineLatest([
+  this.user$,
+  this.permissions$,
+  this.preferences$
+]).pipe(
+  map(([user, permissions, preferences]) => ({
+    name: user.name,
+    canEdit: permissions.includes('edit'),
+    theme: preferences.theme,
+    showAdmin: permissions.includes('admin')
+  }))
+);
+```
+
+`user$`, `permissions$`, `preferences$` 중 하나라도 바뀌면 뷰모델이 자동으로 재계산된다.
+
+수동으로 "user가 바뀌면 canEdit를 다시 계산하고..." 같은 코드가 필요 없다.
+
+**의존성 그래프를 선언**한 거다.
+
+#### 패턴 C: retry + exponential backoff
+
+```ts
+// API 호출 실패 시 지수 백오프로 재시도
+fetchData$ = this.http.get('/api/data').pipe(
+  retry({
+    count: 3,
+    delay: (error, retryCount) => timer(Math.pow(2, retryCount) * 1000)
+  }),
+  catchError(() => of({ data: [], fallback: true }))
+);
+```
+
+"3번까지 재시도하되, 간격은 2초→4초→8초로 늘려라. 다 실패하면 빈 배열로 폴백해라."
+
+이 한 문단이 코드와 1:1로 대응된다.
+
+명령형으로 이걸 구현하면 `retryCount` 변수, `setTimeout` 체이닝, 에러 핸들러 분기로 코드가 3배 이상 길어진다.
+
+### 잘 사용하지 못한 예시
+
+선언형 도구를 쓴다고 선언형이 되는 게 아니다.
+
+사고방식이 명령형이면 어떤 도구를 써도 명령형이다.
+
+#### 안티패턴 A: subscribe 안에서 subscribe
+
+```ts
+// ❌ 콜백 지옥의 Observable 버전
+this.route.params.subscribe(params => {
+  this.http.get(`/api/users/${params['id']}`).subscribe(user => {
+    this.http.get(`/api/posts?userId=${user.id}`).subscribe(posts => {
+      this.posts = posts;
+    });
+  });
+});
+```
+
+Observable을 쓰고 있지만 본질은 콜백 지옥과 같다.
+
+구독 안에서 구독을 열면 내부 구독의 해제를 외부가 관리할 수 없다.
+
+메모리 누수의 직행 열차다.
+
+```ts
+// ✅ switchMap 체이닝
+posts$ = this.route.params.pipe(
+  map(params => params['id']),
+  switchMap(id => this.http.get<User>(`/api/users/${id}`)),
+  switchMap(user => this.http.get<Post[]>(`/api/posts?userId=${user.id}`))
+);
+```
+
+파이프라인 하나로 평탄화됐다.
+
+`switchMap`이 이전 내부 구독을 자동으로 정리하니까 메모리 누수도 없다.
+
+#### 안티패턴 B: Subscription 수동 관리
+
+```ts
+// ❌ 구독을 수동으로 관리
+export class DashboardComponent implements OnInit, OnDestroy {
+  private sub1?: Subscription;
+  private sub2?: Subscription;
+  private sub3?: Subscription;
+  userData: User | null = null;
+  notifications: Notification[] = [];
+  stats: Stats | null = null;
+
+  ngOnInit() {
+    this.sub1 = this.userService.getUser().subscribe(u => this.userData = u);
+    this.sub2 = this.notificationService.getAll().subscribe(n => this.notifications = n);
+    this.sub3 = this.statsService.get().subscribe(s => this.stats = s);
+  }
+
+  ngOnDestroy() {
+    this.sub1?.unsubscribe();
+    this.sub2?.unsubscribe();
+    this.sub3?.unsubscribe();
+  }
+}
+```
+
+구독이 3개인데 벌써 이 난리다.
+
+10개면 `sub1`부터 `sub10`까지 관리해야 한다.
+
+RxJS를 쓰면서 선언형의 이점을 전혀 살리지 못하고 있다.
+
+```ts
+// ✅ async 파이프 + takeUntilDestroyed
+export class DashboardComponent {
+  user$ = this.userService.getUser();
+  notifications$ = this.notificationService.getAll();
+  stats$ = this.statsService.get();
+
+  // 혹시 subscribe가 필요한 경우
+  private destroyRef = inject(DestroyRef);
+
+  ngOnInit() {
+    someStream$.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => /* 필요한 사이드이펙트 */);
+  }
+}
+```
+
+`async` 파이프를 쓰면 구독/해제를 Angular이 알아서 한다.
+
+어쩔 수 없이 `subscribe`가 필요하면 `takeUntilDestroyed`로 한 줄이면 끝이다.
+
+`Subscription` 변수를 손으로 관리하는 건 2018년 코드다.
+
+#### 안티패턴 C: tap()에 비즈니스 로직
+
+```ts
+// ❌ tap 안에서 상태 변이
+this.data$.pipe(
+  tap(data => {
+    this.isLoading = false;
+    this.itemCount = data.length;
+    this.hasError = false;
+    this.lastUpdated = new Date();
+  }),
+  tap(data => {
+    if (data.length > 100) {
+      this.showWarning = true;
+    }
+  })
+).subscribe(data => this.items = data);
+```
+
+`tap`은 사이드이펙트용이다.
+
+정확히는 **디버깅용**이다.
+
+`tap` 안에서 `this.isLoading = false` 같은 비즈니스 로직을 돌리는 순간, 선언형 파이프라인에 명령형을 주입한 거다.
+
+```ts
+// ✅ 상태를 스트림으로 표현
+vm$ = this.data$.pipe(
+  map(data => ({
+    items: data,
+    itemCount: data.length,
+    showWarning: data.length > 100,
+    lastUpdated: new Date()
+  }))
+);
+
+isLoading$ = merge(
+  this.loadTrigger$.pipe(map(() => true)),
+  this.data$.pipe(map(() => false))
+);
+```
+
+상태 자체를 스트림으로 만들면 `tap`이 필요 없다.
+
+`this.isLoading = false` 같은 명령형 할당 대신, `isLoading$`이라는 스트림이 true/false를 방출한다.
+
+## 리액트 진영에서는
+
+React의 핵심 공식이 `UI = f(state)`다.
+
+이 공식 자체가 선언적이다.
+
+"이 state일 때 UI는 이렇게 보여야 한다."
+
+DOM을 직접 조작하지 않는다. state를 바꾸면 React가 알아서 DOM을 맞춘다.
+
+JSX도 선언적이다:
+
+```tsx
+// "버튼이 있고, 클릭하면 count가 올라간다"를 선언
+<button onClick={() => setCount(c => c + 1)}>
+  Count: {count}
+</button>
+```
+
+근데 `useEffect`에서 선언형이 깨진다.
+
+```tsx
+function SearchComponent() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Item[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (query.length < 2) return;
+
+    setIsLoading(true);
+    const controller = new AbortController();
+
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${query}`, { signal: controller.signal })
+        .then(res => res.json())
+        .then(data => {
+          setResults(data.results);
+          setIsLoading(false);
+        })
+        .catch(err => {
+          if (err.name !== 'AbortError') {
+            setIsLoading(false);
+          }
+        });
+    }, 300);
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
+
+  return (
+    <div>
+      <input value={query} onChange={e => setQuery(e.target.value)} />
+      {isLoading && <span>Loading...</span>}
+      {results.map(item => <div key={item.id}>{item.name}</div>)}
+    </div>
+  );
+}
+```
+
+`AbortController` 수동 생성, `clearTimeout` 수동 정리, `deps` 배열 수동 관리.
+
+**선언형 탈을 쓴 명령형이다.**
+
+React 진영도 이 한계를 인지하고 있다.
+
+### TanStack Query: 데이터 페칭을 선언형으로
+
+```tsx
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@/hooks/useDebounce'; // 커스텀 훅
+
+function SearchComponent() {
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['search', debouncedQuery],
+    queryFn: () => api.search(debouncedQuery),
+    enabled: debouncedQuery.length >= 2
+  });
+
+  return (
+    <div>
+      <input value={query} onChange={e => setQuery(e.target.value)} />
+      {isLoading && <span>Loading...</span>}
+      {data?.results.map(item => <div key={item.id}>{item.name}</div>)}
+    </div>
+  );
+}
+```
+
+"이 쿼리키로 이 데이터가 필요하다."
+
+캐싱, 재시도, 중복 요청 제거, 가비지 컬렉션 전부 TanStack Query가 처리한다.
+
+`useEffect` 안에서 `AbortController`를 만들고 `clearTimeout`을 하고 있던 그 모든 코드가 사라졌다.
+
+## 전체 엔지니어링 분야에서는
+
+선언형은 프론트엔드만의 이야기가 아니다.
+
+소프트웨어 엔지니어링 전반에서 가장 강력한 복잡성 관리 도구다.
+
+### SQL
+
+```sql
+SELECT name FROM users WHERE age > 20 ORDER BY name;
+```
+
+"20세 이상 유저의 이름을 알파벳순으로 줘."
+
+인덱스를 타는지, 풀스캔을 하는지, 어떤 정렬 알고리즘을 쓰는지 — 전부 옵티마이저가 결정한다.
+
+내가 하는 일은 **원하는 결과를 선언**하는 것뿐이다.
+
+### HTML/CSS
+
+```css
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+```
+
+"가운데 정렬하고 16px 간격을 줘."
+
+브라우저가 어떤 레이아웃 알고리즘으로 이걸 구현하는지는 신경 쓰지 않는다.
+
+원하는 **상태를 기술**할 뿐이다.
+
+### Terraform
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t3.micro"
+  count         = 3
+
+  tags = {
+    Name = "web-server"
+  }
+}
+```
+
+"t3.micro 인스턴스 3대가 이 AMI로 떠 있어야 한다."
+
+현재 상태가 어떤지, 몇 대를 새로 만들어야 하는지, 어떤 순서로 프로비저닝하는지 — Terraform이 plan을 세우고 apply한다.
+
+### Kubernetes
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  template:
+    spec:
+      containers:
+      - name: web
+        image: nginx:latest
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+```
+
+`replicas: 3`이라고 선언하면 끝이다.
+
+Pod가 하나 죽으면?
+
+컨트롤러가 감지하고 새 Pod를 띄운다.
+
+내가 "Pod 하나 죽었으니 새로 만들어라"고 명령하지 않는다.
+
+**desired state를 선언하면 시스템이 현재 상태를 거기에 맞춘다.**
+
+이것이 선언형의 본질이다.
+
+인프라든 UI든 데이터든, 복잡성이 올라갈수록 선언형이 이긴다.
+
+## 결론
+
+명령형과 선언형은 이분법이 아니다.
+
+둘 다 도구다.
+
+간단한 스크립트에 RxJS를 끌어오는 건 오버스펙이고, 복잡한 비동기 파이프라인을 for문과 콜백으로 짜는 건 자멸이다.
+
+핵심은 이거다:
+
+**복잡성이 올라갈수록 선언형이 유리하다.**
+
+상태가 하나면 `let`으로 충분하다.
+
+상태가 열 개고 비동기가 세 겹이면 선언형 파이프라인이 유일한 탈출구다.
+
+그리고 하나 더.
+
+RxJS를 쓰면서 `subscribe` 안에서 `this.data = ...` 하는 순간, 선언형 파이프라인에 명령형을 주입한 거다.
+
+React에서 `useEffect`에 `AbortController`를 만들면서 "React는 선언형이니까"라고 말하는 것도 마찬가지다.
+
+**도구를 바꿨으면 사고방식도 바꿔야 한다.**
+
+선언형 도구를 쓴다고 선언형이 되는 게 아니다.
+
+"어떻게(HOW)"를 잊고 "무엇을(WHAT)"에 집중할 때, 비로소 선언형의 이점이 시작된다.
