@@ -1,0 +1,334 @@
+---
+title: "Angular 클래스 기반 Guard를 함수형으로 마이그레이션하기"
+date: "2026-02-13T09:00:00"
+description: "Angular 15.2에서 deprecated된 클래스 기반 Route Guard를 함수형으로 전환하는 방법. CanActivate, CanDeactivate, 고차 함수 패턴까지 실전 예제로 정리한다."
+category: "dev"
+tags: ["angular", "route-guard", "functional-guard", "migration", "inject"]
+published: true
+---
+
+![Angular 함수형 Guard 마이그레이션](/images/posts/angular-functional-guards.png)
+
+Angular 15.2에서 클래스 기반 Route Guard가 deprecated됐다.
+
+`@Injectable`, `class`, `implements CanActivate` — 이 보일러플레이트가 전부 필요 없어졌다.
+
+함수형으로 바꾸면 코드가 절반으로 줄어든다.
+
+## 왜 함수형인가
+
+Angular 14.2에서 함수형 Guard가 처음 도입됐다.
+
+15.2에서 클래스 기반이 deprecated됐고, 공식 문서도 함수형을 기본으로 안내한다.
+
+클래스 기반 Guard의 문제는 보일러플레이트다.
+
+Guard 하나 만들려면 `@Injectable()` 데코레이터, `class` 선언, `implements CanActivate`, `canActivate()` 메서드 시그니처가 전부 필요하다.
+
+실제 로직은 `return this.authService.isLoggedIn()` 한 줄인데 감싸는 코드가 더 많다.
+
+Angular 전체가 가볍고 함수 중심적인 방향으로 가고 있다.
+
+standalone 컴포넌트, signals, `inject()` 함수 — 전부 같은 맥락이다.
+
+클래스 기반 Guard도 이 흐름에서 정리된 거다.
+
+함수형 Guard는 tree-shaking에도 유리하다.
+
+클래스는 `@Injectable()` 데코레이터와 메타데이터가 번들에 포함되지만, 함수는 그런 오버헤드가 없다.
+
+## CanActivate — 인증 Guard
+
+가장 흔한 케이스다.
+
+로그인하지 않은 사용자를 로그인 페이지로 리다이렉트하는 Guard.
+
+### 클래스 기반 (Before)
+
+```ts
+@Injectable({ providedIn: 'root' })
+export class AuthGuard implements CanActivate {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): boolean | UrlTree {
+    if (this.authService.isLoggedIn()) {
+      return true;
+    }
+    return this.router.createUrlTree(['/login'], {
+      queryParams: { returnUrl: state.url }
+    });
+  }
+}
+```
+
+`@Injectable`, `constructor`, `implements CanActivate`, 파라미터 타입 선언 — 로직 대비 의례적인 코드가 너무 많다.
+
+### 함수형 (After)
+
+```ts
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isLoggedIn()) {
+    return true;
+  }
+  return router.createUrlTree(['/login'], {
+    queryParams: { returnUrl: state.url }
+  });
+};
+```
+
+`inject()`로 의존성을 가져오고, 로직만 남겼다.
+
+클래스 선언, 데코레이터, constructor 전부 사라졌다.
+
+타입은 `CanActivateFn`으로 지정하니까 `route`, `state` 파라미터 타입도 자동 추론된다.
+
+### 라우트 설정
+
+```ts
+// Before
+{ path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuard] }
+
+// After
+{ path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] }
+```
+
+라우트 설정은 거의 동일하다.
+
+클래스 이름이 함수 이름으로 바뀌었을 뿐이다.
+
+호출하는 쪽에서는 차이를 느끼기 어렵다.
+
+## CanDeactivate — 미저장 변경 Guard
+
+폼에서 저장하지 않고 나가려 할 때 확인하는 Guard다.
+
+### 클래스 기반 (Before)
+
+```ts
+export interface HasUnsavedChanges {
+  hasUnsavedChanges(): boolean;
+}
+
+@Injectable({ providedIn: 'root' })
+export class UnsavedChangesGuard implements CanDeactivate<HasUnsavedChanges> {
+  canDeactivate(
+    component: HasUnsavedChanges,
+    currentRoute: ActivatedRouteSnapshot,
+    currentState: RouterStateSnapshot,
+    nextState: RouterStateSnapshot
+  ): boolean {
+    if (component.hasUnsavedChanges()) {
+      return confirm('저장하지 않은 변경사항이 있습니다. 나가시겠습니까?');
+    }
+    return true;
+  }
+}
+```
+
+인터페이스 정의, 클래스 선언, 4개 파라미터 시그니처.
+
+실제 로직은 `confirm()` 한 줄이다.
+
+### 함수형 (After)
+
+```ts
+export const unsavedChangesGuard: CanDeactivateFn<HasUnsavedChanges> = (component) => {
+  if (component.hasUnsavedChanges()) {
+    return confirm('저장하지 않은 변경사항이 있습니다. 나가시겠습니까?');
+  }
+  return true;
+};
+```
+
+`CanDeactivateFn<T>` 제네릭이 컴포넌트 타입을 잡아주니까 별도의 클래스가 필요 없다.
+
+`inject()`도 안 쓰는 순수 함수다.
+
+DI가 필요 없으면 이렇게 깔끔해진다.
+
+## 고차 함수 패턴 — 설정 가능한 Guard
+
+함수형 Guard의 진짜 이점은 고차 함수 패턴이다.
+
+역할(role) 기반 Guard를 만든다고 하자.
+
+클래스 기반에서는 역할 정보를 `route.data`로 우회해야 했다:
+
+```ts
+// 클래스 기반 — route.data로 우회
+{ path: 'admin', component: AdminComponent, canActivate: [RoleGuard], data: { roles: ['admin'] } }
+
+// Guard 안에서
+const roles = route.data['roles'] as string[];
+```
+
+`data`에 들어간 `roles`가 타입 안전하지 않고, Guard와 라우트 설정이 분리되어서 의도 파악이 어렵다.
+
+함수형에서는 고차 함수로 자연스럽게 해결된다:
+
+```ts
+export function roleGuard(...allowedRoles: string[]): CanActivateFn {
+  return (route, state) => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    const userRole = authService.getUserRole();
+
+    if (allowedRoles.includes(userRole)) {
+      return true;
+    }
+    return router.createUrlTree(['/forbidden']);
+  };
+}
+```
+
+`roleGuard`는 역할 목록을 받아서 `CanActivateFn`을 반환하는 팩토리 함수다.
+
+클로저로 `allowedRoles`를 캡처하니까 `route.data` 같은 우회가 필요 없다.
+
+라우트 설정에서 호출하면 이렇다:
+
+```ts
+{ path: 'admin', component: AdminComponent, canActivate: [roleGuard('admin')] }
+{ path: 'editor', component: EditorComponent, canActivate: [roleGuard('admin', 'editor')] }
+```
+
+호출부에서 어떤 역할이 필요한지 바로 보인다.
+
+`route.data`를 뒤져볼 필요가 없다.
+
+이게 함수형의 핵심 이점이다.
+
+**설정이 코드에 드러난다.**
+
+## inject() 주의사항
+
+함수형 Guard에서 `inject()`를 쓸 때 주의할 점이 있다.
+
+### injection context
+
+`inject()`는 injection context 안에서만 호출할 수 있다.
+
+Guard 함수 본체의 동기 실행 중에는 injection context가 유지된다.
+
+`await` 이후에는 사라진다.
+
+```ts
+// BAD — await 이후 inject() 호출
+export const authGuard: CanActivateFn = async (route, state) => {
+  const http = inject(HttpClient);
+  const result = await firstValueFrom(http.get('/api/check'));
+
+  // inject()를 여기서 호출하면 에러
+  const router = inject(Router); // NG0203: inject() must be called from an injection context
+  return router.createUrlTree(['/login']);
+};
+```
+
+```ts
+// GOOD — inject()를 await 전에 호출
+export const authGuard: CanActivateFn = async (route, state) => {
+  const http = inject(HttpClient);
+  const router = inject(Router); // await 전에 미리 가져온다
+
+  const result = await firstValueFrom(http.get('/api/check'));
+
+  if (!result) {
+    return router.createUrlTree(['/login']);
+  }
+  return true;
+};
+```
+
+규칙은 단순하다.
+
+**`inject()`는 함수 최상단에서 동기적으로 호출한다.**
+
+`await`, `setTimeout`, `subscribe` 콜백 안에서 호출하면 에러다.
+
+### 테스트에서 runInInjectionContext
+
+함수형 Guard를 테스트할 때는 injection context를 수동으로 만들어줘야 한다.
+
+`TestBed.runInInjectionContext()`를 쓴다:
+
+```ts
+describe('authGuard', () => {
+  let authService: jasmine.SpyObj<AuthService>;
+
+  beforeEach(() => {
+    authService = jasmine.createSpyObj('AuthService', ['isLoggedIn']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AuthService, useValue: authService },
+        provideRouter([])
+      ]
+    });
+  });
+
+  it('should allow access when logged in', () => {
+    authService.isLoggedIn.and.returnValue(true);
+
+    const result = TestBed.runInInjectionContext(() => {
+      return authGuard(
+        {} as ActivatedRouteSnapshot,
+        {} as RouterStateSnapshot
+      );
+    });
+
+    expect(result).toBeTrue();
+  });
+});
+```
+
+`runInInjectionContext` 안에서 Guard를 호출하면 `inject()`가 정상 동작한다.
+
+클래스 기반에서 `TestBed.inject(AuthGuard)`로 인스턴스를 가져오던 것과 달라진 부분이다.
+
+## 점진적 마이그레이션
+
+기존 프로젝트에서 한 번에 전부 바꿀 필요는 없다.
+
+Angular는 `mapToCanActivate()` 같은 래퍼 함수를 제공한다:
+
+```ts
+import { mapToCanActivate } from '@angular/router';
+
+// 기존 클래스 기반 Guard를 래핑
+{ path: 'old', component: OldComponent, canActivate: mapToCanActivate([AuthGuard]) }
+
+// 새 Guard는 함수형으로
+{ path: 'new', component: NewComponent, canActivate: [authGuard] }
+```
+
+`mapToCanActivate()`는 클래스 기반 Guard 배열을 받아서 함수형 Guard 배열로 변환한다.
+
+전략은 이렇다:
+
+1. 새로 만드는 Guard는 함수형으로 작성한다.
+2. 기존 Guard는 `mapToCanActivate()`로 감싼다.
+3. 시간이 날 때 기존 Guard를 하나씩 함수형으로 전환한다.
+
+한 라우트 설정 안에서 함수형과 클래스 래핑이 공존해도 문제없다.
+
+## 정리
+
+클래스 기반 Guard는 deprecated됐고, 함수형이 공식 방향이다.
+
+`@Injectable` + `class` + `implements` 보일러플레이트가 `const guard: CanActivateFn` 선언 몇 줄로 줄어든다.
+
+고차 함수 패턴으로 설정 가능한 Guard를 타입 안전하게 만들 수 있고, `route.data` 우회가 필요 없다.
+
+`inject()`는 `await` 전에 호출하는 것만 기억하면 된다.
+
+안 바꿀 이유가 없다.
