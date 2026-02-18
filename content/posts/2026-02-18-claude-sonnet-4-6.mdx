@@ -1,0 +1,221 @@
+---
+title: "Claude Sonnet 4.6 — Opus를 이긴 Sonnet"
+date: "2026-02-18T09:00:00"
+description: "Anthropic이 Claude Sonnet 4.6을 발표했다. 같은 가격에 코딩 성능은 Opus 4.5를 넘어섰고, 적응형 사고와 컨텍스트 압축 같은 새 기능도 들어왔다."
+category: "dev"
+tags: ["AI", "Claude", "Anthropic", "LLM"]
+published: true
+---
+
+![Claude Sonnet 4.6](/images/posts/claude-sonnet-4-6.png)
+
+Anthropic이 2월 17일 Claude Sonnet 4.6을 발표했다.
+
+가격은 그대로인데 코딩 성능에서 Opus 4.5를 선호도로 이겼다.
+
+Sonnet이 Opus를 넘은 건 처음이다.
+
+## Sonnet 4.6 핵심 변경점
+
+가격은 Sonnet 4.5와 동일하게 $3/$15 per 1M tokens (input/output)다.
+
+컨텍스트 윈도우는 1M 토큰 베타를 지원한다.
+
+claude.ai Free와 Pro의 기본 모델이 Sonnet 4.6으로 교체됐다.
+
+Free 티어에도 파일 생성, 커넥터, 스킬, 컴팩션이 포함된다.
+
+API에서는 `claude-sonnet-4-6`으로 접근하고, Amazon Bedrock과 Google Cloud Vertex AI에서도 사용할 수 있다.
+
+## 코딩 성능
+
+Claude Code 사용자 대상 테스트에서 **Sonnet 4.5 대비 약 70%가 Sonnet 4.6을 선호**했다.
+
+더 눈에 띄는 건 Opus 4.5와의 비교다.
+
+이전 최상위 모델이었던 **Opus 4.5 대비 59%가 Sonnet 4.6을 선호**했다.
+
+Sonnet 가격으로 Opus급 코딩 품질을 쓸 수 있게 된 거다.
+
+과도한 엔지니어링(overengineering)이 줄었으며, 단순한 작업에 불필요한 복잡한 코드 생성이 감소했다.
+
+게으름(laziness)도 줄어 코드 일부를 `// TODO`나 `...`으로 생략하는 빈도가 낮아졌다.
+
+허위 성공 주장(false success claims)도 개선됐다.
+
+빌드 실패한 걸 성공했다고 보고하는 케이스가 줄었다는 의미다.
+
+할루시네이션도 감소했다.
+
+명령어 준수(instruction following)가 향상됐고, 멀티스텝 작업의 follow-through가 더 일관적이다.
+
+코드 수정 전 컨텍스트를 더 꼼꼼히 읽고, 공유 로직을 중복 작성하는 대신 통합하는 경향이 생겼다.
+
+### 개발 도구 업체 반응
+
+- **Cursor**는 "장기 태스크(long-horizon tasks)를 포함해 전반적으로 뚜렷한 개선"이라고 평가했다.
+
+- **GitHub**에 따르면 대규모 코드베이스의 복잡한 수정에서 높은 해결률(resolution rate)을 보였다.
+
+- **Cognition**은 "비용 증가 없이 Opus와의 버그 탐지 격차를 의미 있게 좁혔다"고 했다.
+
+- **Windsurf**는 "더 작고 비용 효율적인 모델에서 프론티어급 추론"이라고 표현했다.
+
+- **Bolt**는 "복잡한 앱 빌드와 버그 수정에서 프론티어급 결과"를 냈다고 밝혔다.
+
+- **Rakuten**은 테스트한 iOS 코드 중 최고라고 평가했다. 스펙 준수, 아키텍처, 최신 툴링 활용이 우수했다는 설명이다.
+
+- **Replit**은 "성능 대비 비용 비율이 놀라운 수준"이라며 오케스트레이션과 에이전트 워크로드에서 강점을 보인다고 했다.
+
+## 프론트엔드 품질
+
+프론트엔드 쪽 개선이 눈에 띈다.
+
+**Triple Whale**은 Sonnet 4.6이 "프론트엔드 페이지와 데이터 리포트를 만들 때 완벽한 디자인 감각을 보인다"고 평가했다.
+
+이전보다 훨씬 적은 가이드로 원하는 결과가 나온다고 했다.
+
+시각적 결과물이 이전보다 확실히 나아졌다.
+
+레이아웃, 애니메이션, 디자인 감각이 더 세련돼졌다는 피드백이 여럿 나왔다.
+
+프로덕션 품질에 도달하기까지 필요한 이터레이션 횟수도 줄었다.
+
+AI로 UI 프로토타이핑하는 워크플로우에서 체감이 클 부분이다.
+
+## 컴퓨터 사용 (Computer Use)
+
+![Computer use](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F1206645ef5a618dabce8587b472b21c67a30a0db-3840x1948.png&w=3840&q=75)
+
+Anthropic이 범용 Computer Use를 처음 도입한 건 2024년 10월이다.
+
+그로부터 16개월간 Sonnet 모델의 OSWorld 점수를 꾸준히 올려왔다.
+
+OSWorld는 Chrome, LibreOffice, VS Code 등에서 수백 개 태스크를 테스트하는 벤치마크다.
+
+특별한 API 없이 가상 마우스와 키보드로 사람처럼 조작한다.
+
+Sonnet 4.6은 이전 Sonnet 모델 대비 큰 폭의 개선을 보였다.
+
+보험 회사 Pace의 벤치마크에서는 94%를 기록했다.
+Pace가 테스트한 모델 중 Computer Use 최고 성능이다.
+
+Convey는 "복잡한 Computer Use 정확도에서 테스트한 것 중 확실한 개선"이라고 했다.
+
+초기 사용자들은 복잡한 스프레드시트 탐색과 멀티스텝 웹 폼 작성에서 사람 수준의 능력을 보고했다.
+
+프롬프트 인젝션 저항성이 Sonnet 4.5 대비 크게 개선됐다.
+
+Opus 4.6과 비슷한 수준까지 올라왔는데, Computer Use처럼 외부 입력을 많이 다루는 시나리오에서 중요한 부분이다.
+
+## Opus 4.6을 넘은 영역
+
+![Opus4.6 vs Sonnet4.6](https://www.anthropic.com/_next/image?url=https%3A%2F%2Fwww-cdn.anthropic.com%2Fimages%2F4zrzovbb%2Fwebsite%2F10b2602771d21378cd6d76628a081c8a76dcf216-2600x2960.png&w=3840&q=75)
+
+Sonnet 4.6이 Opus 4.6보다 높은 성과를 보인 영역이 있다.
+
+### Agentic Financial Analysis
+
+Vending-Bench Arena에서 Sonnet 4.6이 1위를 차지했다.
+
+초기에 수용력(capacity)에 투자한 뒤 수익성(profitability)으로 피벗하는 전략을 스스로 개발해서 경쟁 모델을 이겼다.
+
+에이전트가 독립적으로 의사결정을 내리는 **금융 분석 시나리오에서 Opus 4.6을 포함한 다른 모델보다 앞선 거다.**
+
+Hebbia도 금융 서비스 벤치마크에서 Sonnet 4.5 대비 answer match rate가 크게 뛰었다고 밝혔다.
+
+금융 워크플로우 전반의 recall이 좋아졌다는 설명이다.
+
+### Office Tasks
+
+Databricks에 따르면 Sonnet 4.6이 **OfficeQA에서 Opus 4.6과 동등한 성능**을 보였다.
+
+차트, PDF, 테이블 같은 기업용 문서를 읽고 분석하는 태스크다.
+
+Box에서는 Sonnet 4.5 대비 무거운 추론 Q&A에서 **15 포인트** 앞섰다.
+
+가격이 5배 차이나는 모델과 동등하거나 앞선다는 건, 비용 효율 관점에서 Sonnet 4.6이 합리적 선택이 되는 영역이 분명히 있다는 뜻이다.
+
+## 새로운 기능들
+
+### 적응형 사고 (Adaptive Thinking)
+
+extended thinking이 지원된다.
+
+모델이 답변 전에 내부적으로 추론 과정을 거치는 기능인데, Sonnet 4.6에서는 적응형으로 작동한다.
+
+쉬운 질문에는 바로 답하고, 복잡한 문제에만 깊게 생각한다.
+
+thinking off 상태에서도 강한 성능을 보인다는 점도 주목할 만하다.
+
+### 컨텍스트 압축 (Context Compaction)
+
+베타 기능이다.
+
+대화가 길어져서 컨텍스트 한계에 가까워지면, 이전 대화를 자동으로 요약해서 압축한다.
+
+Claude Code처럼 긴 세션을 유지하는 환경에서 유용하다.
+
+### 웹 검색·Fetch 개선
+
+웹 검색과 URL Fetch 도구가 개선됐다.
+
+검색 결과를 코드 실행으로 자동 필터링하는 기능이 추가됐다.
+
+응답 품질이 올라가고 토큰 소비가 줄어드는 효과가 있다.
+
+### GA 전환 도구들
+
+다음 도구들이 정식(GA)으로 전환됐다.
+
+- code execution (웹 도구와 함께 쓸 때 무료)
+- memory
+- programmatic tool calling
+- tool search
+- tool use examples
+
+### Claude in Excel + MCP 커넥터
+
+Excel에서 Claude를 사용할 수 있게 됐고, MCP 커넥터를 통해 S&P Global, LSEG, Daloopa, PitchBook, Moody's, FactSet 같은 금융 데이터 소스에 연결할 수 있다.
+
+claude.ai에서 설정한 MCP 커넥터가 Excel에서도 자동으로 작동한다.
+
+Pro, Max, Team, Enterprise 플랜에서 사용 가능하다.
+
+개발자보다는 비즈니스 사용자 대상 기능이지만, MCP 생태계 확장이라는 점에서 주목할 만하다.
+
+## 안전성
+
+안전성 연구자들은 Sonnet 4.6의 성격을 "따뜻하고 정직하며 친사회적이고, 때로 유머도 있으며, 매우 강한 안전 행동을 보인다"고 평가했다.
+
+최근 Claude 모델과 동등하거나 더 안전하다고 한다.
+
+Computer Use에서의 프롬프트 인젝션 저항성은 Opus 4.6 수준이다.
+
+상세 내용은 [시스템 카드](https://www.anthropic.com/claude-sonnet-4-6-system-card)에서 확인할 수 있다.
+
+## 그럼에도 Opus 4.6
+
+Sonnet 4.6이 많은 영역에서 Opus에 근접했지만, Anthropic은 다음 작업에는 여전히 Opus 4.6을 권장한다.
+
+- 코드베이스 리팩터링
+- 멀티에이전트 조율
+- 최고 수준의 깊은 추론이 필요한 태스크
+
+Sonnet 4.6은 Opus급 지능에 낮은 비용으로 접근할 수 있는 모델이고, Opus 4.6은 여전히 최상위 티어다.
+
+## 정리
+
+핵심은 가격 대비 성능이다.
+
+$3/$15로 Opus급 코딩 성능을 쓸 수 있다.
+
+Sonnet이 Opus를 선호도에서 이긴 건 이번이 처음이고, 과도한 엔지니어링과 게으름이 줄었다는 건 실사용 체감에 직접적으로 영향을 준다.
+
+Zapier는 분기 처리, 멀티스텝 태스크(계약 라우팅, 템플릿 선택, CRM 조율)에서 강하다고 했고, Harvey는 재판 전략과 증거 자료 준비에 유용하다고 평가했다.
+
+코딩뿐 아니라 비즈니스 에이전트 영역까지 쓸 만해진 거다.
+
+API 사용자 입장에서는 `claude-sonnet-4-6`으로 모델 ID만 바꾸면 된다.
+
+Claude Code를 쓰고 있다면 이미 기본 모델로 적용돼 있을 거다.
