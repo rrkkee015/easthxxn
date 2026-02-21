@@ -1,0 +1,284 @@
+---
+title: "Claude Code + Chrome — CLI에서 브라우저를 조종하는 방법"
+date: "2026-02-21T09:00:00"
+description: "Claude Code와 Chrome 확장을 연동하면 CLI에서 바로 브라우저를 자동화할 수 있다. 설정부터 활용 사례, 트러블슈팅까지 정리했다."
+category: "dev"
+tags: ["Claude Code", "Chrome", "브라우저 자동화", "Anthropic", "AI"]
+published: true
+---
+
+![Claude Code + Chrome](/images/posts/claude-code-chrome.png)
+
+Claude Code에 Chrome 브라우저 연동 기능이 베타로 들어왔다.
+
+터미널에서 코드 짜다가 바로 브라우저를 열어서 테스트하고, 콘솔 로그 읽고, 폼 채우고, 데이터 긁어오는 게 가능하다.
+
+컨텍스트 전환 없이 CLI에서 브라우저까지 한 흐름으로 작업할 수 있다는 게 핵심이다.
+
+## 뭘 할 수 있나
+
+Chrome이 연결되면 브라우저 작업과 코딩 작업을 하나의 워크플로우로 엮을 수 있다.
+
+- **라이브 디버깅** — 콘솔 에러와 DOM 상태를 직접 읽고, 원인이 된 코드를 바로 고친다.
+- **디자인 검증** — Figma 목업 보고 UI를 만든 다음, 브라우저에서 열어서 맞는지 확인한다.
+- **웹앱 테스트** — 폼 유효성 검사, 비주얼 리그레션, 유저 플로우 검증을 시킬 수 있다.
+- **인증된 웹앱 접근** — Google Docs, Gmail, Notion 같은 앱에 이미 로그인된 상태 그대로 접근한다. 별도 API 커넥터 없이.
+- **데이터 추출** — 웹 페이지에서 구조화된 정보를 뽑아서 로컬에 저장한다.
+- **태스크 자동화** — 데이터 입력, 폼 채우기, 여러 사이트 걸친 반복 작업을 자동화한다.
+- **세션 녹화** — 브라우저 인터랙션을 GIF로 녹화해서 공유할 수 있다.
+
+중요한 건 이것들이 독립적으로 동작하는 게 아니라, 코딩 작업과 체이닝된다는 거다.
+
+코드를 수정하고 → 브라우저에서 확인하고 → 문제가 있으면 다시 코드를 고치는 루프가 하나의 세션 안에서 돌아간다.
+
+## 사전 준비
+
+필요한 것들은 다음과 같다.
+
+- [Google Chrome](https://www.google.com/chrome/) 또는 [Microsoft Edge](https://www.microsoft.com/edge)
+- [Claude in Chrome 확장](https://chromewebstore.google.com/detail/claude/fcoeoabgfenejglbffodgkkbkcdhcgfn) — 버전 1.0.36 이상. Chrome과 Edge 둘 다 지원한다.
+- [Claude Code](https://code.claude.com/docs/en/quickstart) — 버전 2.0.73 이상
+- Anthropic 직접 플랜 (Pro, Max, Teams, Enterprise 중 하나)
+
+주의할 점이 몇 가지 있다.
+
+**지원 브라우저가 제한적이다.**
+
+현재 Google Chrome과 Microsoft Edge만 된다.
+
+Brave, Arc 같은 크로미움 기반 브라우저는 아직 안 된다.
+
+WSL(Windows Subsystem for Linux)도 미지원이다.
+
+**서드파티 프로바이더로는 안 된다.**
+
+Amazon Bedrock, Google Cloud Vertex AI, Microsoft Foundry를 통해 Claude를 쓰고 있다면 이 기능을 쓸 수 없다.
+
+서드파티만 쓰고 있다면 별도의 claude.ai 계정이 필요하다.
+
+## 시작하기
+
+### CLI에서 시작
+
+`--chrome` 플래그를 붙여서 Claude Code를 실행한다.
+
+```bash
+claude --chrome
+```
+
+이미 세션이 열려 있다면 `/chrome` 명령어로 활성화할 수도 있다.
+
+연결되면 바로 브라우저 작업을 시킬 수 있다.
+
+```text
+Go to code.claude.com/docs, click on the search box,
+type "hooks", and tell me what results appear
+```
+
+이렇게 하면 페이지로 이동해서, 검색창 클릭하고, "hooks"를 입력하고, 결과를 알려준다.
+
+터미널에서 다 된다.
+
+`/chrome`을 언제든 실행하면 연결 상태 확인, 권한 관리, 재연결을 할 수 있다.
+
+VS Code에서는 [VS Code 확장 문서](https://code.claude.com/docs/en/vs-code#automate-browser-tasks-with-chrome)를 참고하면 된다.
+
+### 매번 --chrome 치기 귀찮다면
+
+`/chrome`을 실행하고 "Enabled by default"를 선택하면 된다.
+
+그러면 다음 세션부터 자동으로 Chrome이 연결된다.
+
+다만 주의점이 있다.
+
+기본 활성화하면 브라우저 도구가 항상 로드되기 때문에 컨텍스트 사용량이 늘어난다.
+
+컨텍스트 소비가 신경 쓰이면 기본 설정을 끄고, 필요할 때만 `--chrome`을 쓰는 게 낫다.
+
+VS Code 확장에서는 Chrome 확장만 설치하면 추가 플래그 없이 바로 쓸 수 있다.
+
+### 사이트 권한 관리
+
+사이트별 권한은 Chrome 확장 설정에서 관리한다.
+
+Claude가 어떤 사이트에서 탐색, 클릭, 타이핑할 수 있는지를 여기서 제어한다.
+
+권한 체계가 Chrome 확장에서 상속되는 구조다.
+
+## 활용 예시
+
+`/mcp`를 실행하고 `claude-in-chrome`을 선택하면 사용 가능한 브라우저 도구 전체 목록을 볼 수 있다.
+
+아래는 자주 쓰이는 패턴들이다.
+
+### 로컬 웹앱 테스트
+
+웹앱을 개발하다가 변경 사항이 제대로 동작하는지 검증하고 싶을 때 쓴다.
+
+```text
+I just updated the login form validation. Can you open localhost:3000,
+try submitting the form with invalid data, and check if the error
+messages appear correctly?
+```
+
+Claude가 로컬 서버로 이동해서 폼을 조작하고, 관찰 결과를 보고한다.
+
+코드 고치고 → 브라우저에서 확인하는 루프를 터미널 안에서 돌릴 수 있다.
+
+### 콘솔 로그로 디버깅
+
+콘솔 출력을 읽어서 문제를 진단할 수 있다.
+
+```text
+Open the dashboard page and check the console for any errors when
+the page loads.
+```
+
+콘솔 메시지를 읽고 특정 패턴이나 에러 타입으로 필터링해준다.
+
+팁 하나 — "콘솔 로그 전부 보여줘"보다 "어떤 패턴을 찾아줘"라고 구체적으로 말하는 게 좋다.
+
+로그가 방대해질 수 있기 때문이다.
+
+### 폼 자동 채우기
+
+반복적인 데이터 입력 작업을 자동화한다.
+
+```text
+I have a spreadsheet of customer contacts in contacts.csv. For each row,
+go to the CRM at crm.example.com, click "Add Contact", and fill in the
+name, email, and phone fields.
+```
+
+로컬 파일을 읽고, 웹 인터페이스를 탐색해서, 각 레코드의 데이터를 입력한다.
+
+CSV 한 장이면 수십 건의 수동 입력을 자동화할 수 있다.
+
+### Google Docs에 글 작성
+
+API 설정 없이 문서에 직접 작성할 수 있다.
+
+```text
+Draft a project update based on the recent commits and add it to my
+Google Doc at docs.google.com/document/d/abc123
+```
+
+문서를 열고, 에디터를 클릭하고, 내용을 타이핑한다.
+
+이미 로그인된 상태를 공유하기 때문에 Gmail, Notion, Sheets 등 어떤 웹앱이든 같은 방식으로 동작한다.
+
+별도 API 커넥터가 필요 없다는 게 핵심이다.
+
+### 웹 페이지에서 데이터 추출
+
+```text
+Go to the product listings page and extract the name, price, and
+availability for each item. Save the results as a CSV file.
+```
+
+페이지로 이동해서 콘텐츠를 읽고, 구조화된 형식으로 정리해서 저장한다.
+
+스크래핑 스크립트 짤 필요 없이 자연어 한 줄이면 된다.
+
+### 멀티사이트 워크플로우
+
+여러 웹사이트를 넘나들며 작업을 조합할 수 있다.
+
+```text
+Check my calendar for meetings tomorrow, then for each meeting with
+an external attendee, look up their company website and add a note
+about what they do.
+```
+
+탭 여러 개를 오가면서 정보를 수집하고 워크플로우를 완료한다.
+
+사이트 간 컨텍스트가 유지되기 때문에 이런 복합 작업이 가능하다.
+
+### 데모 GIF 녹화
+
+브라우저 인터랙션을 GIF로 녹화할 수 있다.
+
+```text
+Record a GIF showing how to complete the checkout flow, from adding
+an item to the cart through to the confirmation page.
+```
+
+인터랙션 시퀀스를 녹화하고 GIF 파일로 저장한다.
+
+PR에 첨부하거나 문서에 넣기 좋다.
+
+## 트러블슈팅
+
+### 확장이 감지 안 될 때
+
+"Chrome extension not detected"가 뜨면 다음을 순서대로 확인한다.
+
+1. Chrome 확장이 설치되어 있고 `chrome://extensions`에서 활성화 상태인지 확인
+2. `claude --version`으로 Claude Code가 최신인지 확인
+3. Chrome이 실행 중인지 확인
+4. `/chrome` → "Reconnect extension"으로 재연결 시도
+5. 안 되면 Claude Code와 Chrome 둘 다 재시작
+
+처음 Chrome 연동을 활성화하면 Claude Code가 네이티브 메시징 호스트 설정 파일을 설치한다.
+
+Chrome은 이 파일을 시작 시 읽기 때문에, 최초 시도에서 감지가 안 되면 **Chrome을 재시작**해야 한다.
+
+그래도 안 되면 호스트 설정 파일이 존재하는지 확인한다.
+
+**Chrome 경로:**
+
+| OS | 경로 |
+|---|---|
+| macOS | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json` |
+| Linux | `~/.config/google-chrome/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json` |
+| Windows | `HKCU\Software\Google\Chrome\NativeMessagingHosts\` (레지스트리) |
+
+**Edge 경로:**
+
+| OS | 경로 |
+|---|---|
+| macOS | `~/Library/Application Support/Microsoft Edge/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json` |
+| Linux | `~/.config/microsoft-edge/NativeMessagingHosts/com.anthropic.claude_code_browser_extension.json` |
+| Windows | `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\` (레지스트리) |
+
+### 브라우저가 응답하지 않을 때
+
+1. **모달 다이얼로그 확인** — alert, confirm, prompt 같은 JavaScript 다이얼로그가 페이지를 블로킹하고 있을 수 있다. 다이얼로그를 수동으로 닫고 Claude에게 계속하라고 하면 된다.
+2. 새 탭을 만들어서 다시 시도
+3. `chrome://extensions`에서 확장을 비활성화했다가 다시 활성화
+
+### 긴 세션에서 연결이 끊길 때
+
+Chrome 확장의 서비스 워커가 장시간 유휴 상태에서 잠들 수 있다.
+
+그러면 연결이 끊긴다.
+
+브라우저 도구가 갑자기 안 되면 `/chrome` → "Reconnect extension"으로 재연결하면 된다.
+
+### Windows에서의 이슈
+
+- **Named pipe 충돌 (EADDRINUSE)** — 다른 프로세스가 같은 named pipe를 쓰고 있으면 발생한다. Claude Code를 재시작하고, Chrome을 쓰고 있는 다른 Claude Code 세션이 있으면 닫아야 한다.
+- **네이티브 메시징 호스트 에러** — 호스트가 시작 시 크래시하면 Claude Code를 재설치해서 호스트 설정을 재생성한다.
+
+### 자주 만나는 에러 메시지
+
+| 에러 | 원인 | 해결 |
+|---|---|---|
+| "Browser extension is not connected" | 네이티브 메시징 호스트가 확장에 도달 못 함 | Chrome과 Claude Code 재시작 후 `/chrome`으로 재연결 |
+| "Extension not detected" | Chrome 확장이 미설치 또는 비활성 | `chrome://extensions`에서 확장 설치/활성화 |
+| "No tab available" | 탭이 준비되기 전에 Claude가 동작 시도 | 새 탭을 만들어달라고 하고 재시도 |
+| "Receiving end does not exist" | 확장 서비스 워커가 유휴 상태로 전환됨 | `/chrome` → "Reconnect extension" |
+
+## 정리
+
+Claude Code + Chrome 연동의 핵심은 **컨텍스트 전환 제거**다.
+
+코드 에디터 → 브라우저 → 다시 에디터로 왔다 갔다 하는 대신, 터미널 하나에서 코드 수정과 브라우저 검증을 동시에 돌린다.
+
+특히 로컬 웹앱 테스트, 콘솔 디버깅, 인증된 웹앱 자동화 시나리오에서 유용하다.
+
+API 커넥터 없이 로그인 상태 그대로 Google Docs나 Notion에 접근할 수 있다는 것도 크다.
+
+아직 베타라서 Brave, Arc 같은 브라우저는 안 되고, 서드파티 프로바이더에서도 못 쓴다.
+
+하지만 Chrome이나 Edge를 쓰고 있다면 `claude --chrome` 한 줄로 바로 시작할 수 있다.
