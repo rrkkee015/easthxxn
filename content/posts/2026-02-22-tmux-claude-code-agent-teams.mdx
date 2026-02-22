@@ -1,0 +1,263 @@
+---
+title: "Claude Code를 tmux 위에 올려야 하는 이유 — Agent Teams 실전 세팅까지"
+date: "2026-02-22T09:00:00"
+description: "iTerm2를 닫으면 Claude Code도 죽는다. tmux 위에서 실행하면 세션이 유지되고, Agent Teams split pane까지 쓸 수 있다. 세션 유지부터 멀티 에이전트 협업 환경 구축까지 정리했다."
+category: "dev"
+tags: ["Claude Code", "tmux", "Agent Teams", "Anthropic", "AI", "터미널"]
+published: true
+---
+
+![tmux + Claude Code](/images/posts/tmux-claude-code-agent-teams.png)
+
+Claude Code를 iTerm2에서 돌리다가 실수로 터미널을 닫은 적이 있다.
+
+리팩토링 중간이었는데 프로세스가 그대로 날아갔다.
+
+iTerm2가 종료되면 그 위에서 돌던 프로세스도 같이 죽으니까 당연한 결과다.
+
+이걸 해결하려고 tmux를 쓰기 시작했고, [Agent Teams 문서](https://code.claude.com/docs/en/agent-teams)를 읽다가 tmux가 단순 세션 유지 이상의 역할을 한다는 걸 알게 됐다.
+
+## 왜 tmux인가
+
+tmux는 터미널 세션을 서버-클라이언트 구조로 분리한다.
+
+핵심은 **tmux server가 백그라운드 프로세스**라는 거다.
+
+iTerm2는 클라이언트 역할만 하니까, 닫아도 서버와 그 위의 프로세스는 그대로 살아있다.
+
+```bash
+brew install tmux
+```
+
+설치는 이 한 줄이면 된다.
+
+## 기본 흐름
+
+```bash
+# 세션 만들기
+tmux new -s refactor
+
+# Claude Code 실행 후 작업 지시
+claude
+
+# 작업이 돌아가는 동안 세션에서 빠져나오기 (detach)
+# Ctrl+b → d
+
+# iTerm2를 닫아도 OK
+
+# 나중에 다시 붙기
+tmux attach -t refactor
+```
+
+detach한 사이에 Claude Code가 작업을 끝냈으면 결과가 나와있고, 아직 돌고 있으면 진행 상태를 볼 수 있다.
+
+리팩토링 같은 긴 작업을 시켜놓고 자리를 비울 수 있다는 게 가장 직접적인 이점이다.
+
+`tmux ls`로 살아있는 세션 목록을 확인할 수 있고, 세션마다 이름을 붙여두면 관리가 편하다.
+
+참고로 컴퓨터를 완전히 끄면(shutdown/restart) tmux server도 종료된다.
+
+sleep(화면 닫기)은 프로세스가 일시정지될 뿐 죽지 않으니, wake하면 이어서 돌아간다.
+
+## iTerm2 통합 모드
+
+iTerm2에는 tmux 통합 모드(`-CC`)가 있다.
+
+```bash
+tmux -CC new -s claude-work
+```
+
+tmux의 pane/window가 iTerm2 네이티브 탭과 창으로 매핑된다.
+
+`Ctrl+b` 대신 `Cmd+T`(새 탭), `Cmd+D`(분할) 같은 익숙한 단축키를 쓸 수 있다.
+
+tmux의 세션 유지 + iTerm2의 UX를 동시에 가져가는 구조다.
+
+Claude Code 공식 문서에서도 iTerm2에서의 tmux 진입점으로 `tmux -CC`를 권장하고 있다.
+
+재접속도 간단하다.
+
+```bash
+tmux -CC attach -t claude-work
+```
+
+## Agent Teams가 tmux를 필요로 하는 이유
+
+여기서부터가 본론이다.
+
+[Agent Teams](https://code.claude.com/docs/en/agent-teams)는 여러 Claude Code 인스턴스가 팀으로 협업하는 기능이다.
+
+하나가 리드, 나머지가 teammate로 작동하고, teammate끼리 직접 메시지를 주고받으며 공유 태스크 리스트로 작업을 조율한다.
+
+Subagent가 "시키고 결과만 받는" 구조라면, Agent Teams는 "토론하고 반박하고 합의를 도출하는" 구조다.
+
+Agent Teams에는 두 가지 디스플레이 모드가 있다.
+
+- **in-process** — 모든 teammate가 하나의 터미널 안에서 돌아간다. `Shift+Down`으로 전환한다.
+- **split pane** — 각 teammate가 별도 pane을 가진다. 전체 팀 상황을 한눈에 볼 수 있다.
+
+split pane이 Agent Teams의 핵심 장점인데, **이걸 쓰려면 tmux 또는 iTerm2가 필요하다.**
+
+기본값이 `"auto"`라서, tmux 세션 안에서 Claude Code를 실행하면 자동으로 split pane 모드가 켜진다.
+
+tmux 없이 iTerm2에서 바로 실행하면 in-process 모드로 폴백된다.
+
+세션 유지를 위해 tmux를 쓰기 시작했는데, Agent Teams의 split pane이 덤으로 따라온 셈이다.
+
+### 활성화
+
+아직 실험적 기능이라 기본 비활성화 상태다.
+
+```json
+// settings.json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+### 사용법
+
+자연어로 팀 구성을 지시하면 된다.
+
+```
+PR #142를 리뷰하는 팀을 만들어줘.
+- 보안 이슈 담당 1명
+- 성능 영향 분석 1명
+- 테스트 커버리지 확인 1명
+```
+
+Claude Code가 팀을 생성하고, 3명의 teammate를 spawn한다.
+
+tmux split pane에서 3개 pane이 열리면서 각 teammate의 분석이 실시간으로 올라온다.
+
+리드가 끝나면 세 관점의 결과를 종합해서 보고한다.
+
+한 사람이 리뷰하면 한 가지 관점에 쏠리기 쉬운데, 역할을 분리하면 보안, 성능, 커버리지를 각각 깊이 있게 볼 수 있다.
+
+### 가설 경쟁 디버깅
+
+Agent Teams가 가장 강력한 시나리오는 원인이 불명확한 버그다.
+
+```
+앱이 메시지 하나 보내고 종료되는 버그가 있어.
+5명의 teammate를 만들어서 각각 다른 가설을 검증해.
+서로의 이론을 반박하면서 과학적 토론처럼 진행해.
+```
+
+단일 세션 디버깅의 문제는 앵커링이다.
+
+하나의 가설을 탐색하면 거기에 끌려가서 다른 가능성을 놓친다.
+
+여러 에이전트가 독립적으로 탐색하고 서로 반박하면, 살아남은 이론이 실제 원인일 확률이 높아진다.
+
+tmux split pane에서 5개 pane이 열리고, 각각 다른 방향으로 파고드는 걸 실시간으로 보는 경험은 꽤 인상적이다.
+
+### Subagent와 뭐가 다른가
+
+| 항목 | Subagent | Agent Teams |
+|---|---|---|
+| 커뮤니케이션 | 메인에게만 보고 | teammate끼리 직접 대화 |
+| 조율 | 메인이 전부 관리 | 공유 태스크로 자율 조율 |
+| 적합한 작업 | 결과만 필요한 단순 위임 | 토론과 상호 검증이 필요한 작업 |
+| 토큰 비용 | 낮음 | 높음 |
+
+간단한 위임이면 Subagent, 서로 토론하고 검증해야 하면 Agent Teams다.
+
+## 실전에 넣을 때 챙길 것들
+
+### Notification Hook
+
+tmux에서 detach하고 다른 작업 중이면 Claude Code가 언제 끝났는지 모른다.
+
+Claude Code에서 `/hooks` → `Notification` 이벤트에 다음을 등록해두면 macOS 알림이 온다.
+
+```bash
+osascript -e 'display notification "Claude Code needs your attention" with title "Claude Code"'
+```
+
+작업 완료, 권한 승인 필요, 질문 대기 상태일 때 알림이 뜬다.
+
+detach 상태에서도 macOS 알림은 오니까, tmux와 궁합이 좋다.
+
+### 세션 네이밍
+
+tmux 세션과 Claude Code 세션 모두 이름을 붙이자.
+
+```bash
+tmux new -s feat-auth
+```
+
+```
+# Claude Code 안에서
+/rename auth-refactor
+```
+
+`tmux ls`로 세션 목록, `/resume`으로 Claude Code 대화 이력을 각각 관리할 수 있다.
+
+이름이 없으면 나중에 뭐가 뭔지 모른다.
+
+### teammate에게 충분한 컨텍스트 넘기기
+
+teammate는 리드의 대화 히스토리를 상속받지 않는다.
+
+`CLAUDE.md`는 자동 로드되지만, 태스크별 디테일은 spawn 프롬프트에 직접 넣어야 한다.
+
+```
+보안 리뷰 teammate를 spawn해줘.
+프롬프트: "src/auth/ 인증 모듈을 보안 관점에서 리뷰해.
+토큰 핸들링, 세션 관리, 입력 유효성 검사에 집중해.
+앱은 httpOnly 쿠키에 JWT를 저장하고 있어.
+심각도 등급과 함께 보고해."
+```
+
+프롬프트가 구체적일수록 결과물 품질이 올라간다.
+
+### 태스크 사이징
+
+teammate당 5-6개 태스크가 적당하다.
+
+너무 작으면 조율 오버헤드가 이점을 넘고, 너무 크면 중간 점검 없이 오래 돌아서 삽질 리스크가 커진다.
+
+리드에게 "작업을 더 잘게 쪼개줘"라고 하면 알아서 분할한다.
+
+### 파일 충돌
+
+여러 teammate가 같은 파일을 수정하면 덮어쓰기가 발생한다.
+
+작업 분배할 때 파일 세트를 겹치지 않게 나누는 게 중요하다.
+
+git worktree와 Agent Teams를 조합하면 파일시스템 레벨에서 격리할 수 있다.
+
+### Agent Teams 권한 관리
+
+teammate마다 권한 요청이 올라온다.
+
+매번 승인하기 번거로우면 permission settings에서 자주 쓰는 작업을 미리 승인해두자.
+
+### 고아 세션 정리
+
+Agent Teams가 끝난 후 tmux 세션이 남을 수 있다.
+
+```bash
+tmux ls
+tmux kill-session -t <session-name>
+```
+
+### 알려진 제약
+
+- `/resume`이 in-process teammate를 복원하지 못한다. 세션 resume 후 새 teammate를 spawn하라고 지시하면 된다.
+- 세션당 하나의 팀만 운영 가능하다.
+- nested team은 안 된다. teammate가 자체 팀을 만들 수 없다.
+- split pane은 tmux 또는 iTerm2에서만 된다. VS Code 내장 터미널, Windows Terminal은 미지원이다.
+
+## 정리
+
+tmux를 쓰면 Claude Code의 세션이 터미널 에뮬레이터 수명에서 분리된다.
+
+거기에 Agent Teams까지 쓰면 여러 에이전트가 split pane에서 병렬로 협업하는 환경이 만들어진다.
+
+세션 유지를 위해 tmux를 도입했는데, Agent Teams의 split pane이 자연스럽게 따라온다.
+
+둘을 별도로 세팅하는 게 아니라, tmux 하나가 두 가지를 동시에 해결하는 구조다.
