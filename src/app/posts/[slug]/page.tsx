@@ -63,8 +63,23 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    author: { "@type": "Person", name: "easthxxn", url: siteUrl },
+    url: `${siteUrl}/posts/${slug}`,
+    keywords: post.tags,
+  };
+
   return (
     <div className="relative">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ReadingProgress />
       <article className="mt-6">
         <header className="mb-8">

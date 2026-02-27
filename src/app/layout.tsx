@@ -63,6 +63,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col overflow-x-clip`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "easthxxn",
+              url: siteUrl,
+              description: "기록하고 공유합니다",
+            }),
+          }}
+        />
         <Script
           id="scroll-restoration"
           strategy="beforeInteractive"

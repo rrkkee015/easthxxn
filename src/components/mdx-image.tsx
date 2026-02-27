@@ -1,8 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useRef, useState } from "react";
 
-export function MdxImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+interface MdxImageProps {
+  src: string;
+  alt?: string;
+}
+
+export function MdxImage(props: MdxImageProps) {
   const [loaded, setLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
@@ -18,12 +24,14 @@ export function MdxImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
       {!loaded && (
         <span className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-800" />
       )}
-      <img
-        {...props}
+      <Image
         ref={ref}
-        loading="eager"
+        src={props.src}
+        alt={props.alt ?? ""}
+        fill
+        sizes="(max-width: 672px) 100vw, 672px"
         onLoad={() => setLoaded(true)}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${
+        className={`object-cover transition-opacity duration-500 ${
           loaded ? "opacity-100" : "opacity-0"
         }`}
       />
