@@ -1,0 +1,245 @@
+---
+title: "Next.js 블로그에 적용한 SEO 기법 총정리"
+slug: "2026-02-27-nextjs-blog-seo"
+date: "2026-02-27"
+description: "Next.js App Router 블로그에 실제로 적용한 SEO 기법들을 효과 순으로 정리했다."
+category: "dev"
+tags: ["nextjs", "seo", "structured-data", "core-web-vitals"]
+published: true
+---
+
+![Next.js 블로그 SEO 최적화](/images/posts/nextjs-blog-seo.png)
+
+블로그를 만들었으면 검색에 노출되어야 의미가 있다.
+
+이 블로그에 실제로 적용한 SEO 기법들을 효과가 큰 순서대로 정리했다.
+
+## 1. Meta Tags
+
+검색 결과에 직접 표시되는 정보다.
+
+title, description은 기본이고, Open Graph와 Twitter Card까지 챙겨야 SNS 공유 시 미리보기가 제대로 나온다.
+
+```tsx
+// src/app/posts/[slug]/page.tsx
+export async function generateMetadata({ params }: PostPageProps): Promise<Metadata> {
+  const post = getPostBySlug(slug);
+
+  return {
+    title: post.title,
+    description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      type: "article",
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+    },
+  };
+}
+```
+
+Next.js의 `generateMetadata`를 쓰면 페이지별로 동적 메타 태그를 생성할 수 있다.
+
+레이아웃에서 기본값을 설정하고, 각 페이지에서 오버라이드하는 구조다.
+
+## 2. Sitemap & Robots.txt
+
+구글 크롤러에게 "이 사이트에 어떤 페이지가 있는지" 알려주는 지도다.
+
+없으면 크롤러가 링크를 따라가며 하나하나 발견해야 해서 인덱싱이 느려진다.
+
+```ts
+// src/app/sitemap.ts
+export default function sitemap(): MetadataRoute.Sitemap {
+  const postEntries = posts
+    .filter((post) => post.published)
+    .map((post) => ({
+      url: `${siteUrl}/posts/${post.slug}`,
+      lastModified: new Date(post.date),
+    }));
+
+  return [
+    { url: siteUrl, lastModified: new Date() },
+    ...categoryEntries,
+    ...postEntries,
+  ];
+}
+```
+
+App Router에서는 `sitemap.ts`와 `robots.ts` 파일만 만들면 `/sitemap.xml`, `/robots.txt`로 자동 서빙된다.
+
+별도 빌드 스크립트가 필요 없다.
+
+## 3. Canonical URL
+
+같은 콘텐츠가 여러 URL로 접근 가능할 때 대표 URL을 지정하는 태그다.
+
+`/`와 `/?page=1`은 같은 페이지인데, 구글이 다른 페이지로 인식하면 SEO 점수가 분산된다.
+
+canonical 태그로 하나를 지정하면 점수가 합쳐진다.
+
+```tsx
+return {
+  alternates: {
+    canonical: pageNum > 1 ? `${siteUrl}?page=${pageNum}` : siteUrl,
+  },
+};
+```
+
+1페이지는 쿼리 파라미터 없는 깔끔한 URL을 canonical로 지정했다.
+
+## 4. JSON-LD 구조화 데이터
+
+HTML에 삽입하는 JSON 형태의 메타데이터다.
+
+구글 크롤러가 이걸 읽고 페이지 내용을 구조적으로 파악한다.
+
+```tsx
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: post.title,
+  description: post.description,
+  datePublished: post.date,
+  author: { "@type": "Person", name: "easthxxn", url: siteUrl },
+  keywords: post.tags,
+};
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+/>
+```
+
+이게 있으면 구글 검색 결과에서 작성자, 날짜 등이 리치 스니펫으로 표시될 수 있다.
+
+Open Graph가 SNS 공유용이라면, JSON-LD는 검색엔진용이다.
+
+사이트 전체에는 `WebSite` 스키마, 각 포스트에는 `BlogPosting` 스키마를 적용했다.
+
+## 5. 이미지 최적화 (next/image)
+
+Next.js의 `<Image>` 컴포넌트를 쓰면 브라우저가 지원하는 최적 포맷(WebP/AVIF)으로 자동 변환된다.
+
+srcset도 자동 생성해서 기기별 최적 사이즈를 제공한다.
+
+```tsx
+<Image
+  src={props.src}
+  alt={props.alt ?? ""}
+  fill
+  sizes="(max-width: 672px) 100vw, 672px"
+/>
+```
+
+네이티브 `<img>` 태그에서 `next/image`로 바꾸는 것만으로 Core Web Vitals 점수가 개선된다.
+
+Vercel 배포 환경에서는 이미지 최적화 서버가 기본 제공되니까 별도 설정도 필요 없다.
+
+## 6. Breadcrumb
+
+포스트 상단에 `홈 › 개발 › 글 제목` 같은 경로를 보여주는 내비게이션이다.
+
+```tsx
+const breadcrumbJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    { "@type": "ListItem", position: 1, name: "홈", item: siteUrl },
+    { "@type": "ListItem", position: 2, name: "개발", item: `${siteUrl}/categories/dev` },
+  ],
+};
+```
+
+UI 컴포넌트만 있어도 사용자 경험이 좋아지는데, `BreadcrumbList` JSON-LD 스키마를 같이 넣으면 구글 검색 결과에서 URL 대신 사람이 읽을 수 있는 경로가 표시된다.
+
+```
+// 스키마 없을 때
+easthxxn.com › posts › 2026-01-31-og-image-nextjs
+
+// 스키마 있을 때
+easthxxn.com › 개발 › Next.js에서 OG 이미지 자동 생성하기
+```
+
+## 7. Semantic HTML
+
+`<article>`, `<nav>`, `<main>`, `<header>`, `<footer>`, `<aside>`, `<time>` 같은 시맨틱 태그를 쓰면 크롤러가 페이지 구조를 더 잘 이해한다.
+
+```tsx
+<article>
+  <header>
+    <h1>{post.title}</h1>
+    <time dateTime={post.date}>{formatDate(post.date)}</time>
+  </header>
+  <div className="prose">
+    <MDXContent code={post.body} />
+  </div>
+</article>
+```
+
+`<div>`로 도배하는 것과 시맨틱 태그를 쓰는 건 브라우저 렌더링에는 차이가 없다.
+
+하지만 크롤러와 스크린 리더에게는 완전히 다른 정보를 전달한다.
+
+## 8. 폰트 최적화 (next/font)
+
+`next/font`를 쓰면 폰트 파일이 빌드 타임에 최적화되고, 폰트 로딩 중 레이아웃이 밀리는 CLS를 방지할 수 있다.
+
+```tsx
+import { Geist, Geist_Mono } from "next/font/google";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+```
+
+Google Fonts를 `<link>`로 직접 불러오면 FOUT(Flash of Unstyled Text)가 발생한다.
+
+`next/font`는 폰트를 셀프 호스팅하고 `font-display`를 자동으로 최적화해서 이 문제를 해결한다.
+
+CLS(Cumulative Layout Shift)는 Core Web Vitals 지표 중 하나로, 구글 랭킹에 직접 영향을 준다.
+
+## 9. RSS Feed
+
+콘텐츠 배포 채널이다.
+
+검색엔진이 새 글을 빠르게 발견하고, 피드 구독자에게 자동으로 알림이 간다.
+
+```tsx
+// layout.tsx metadata
+alternates: {
+  types: {
+    "application/rss+xml": `${siteUrl}/feed.xml`,
+  },
+},
+```
+
+`<link rel="alternate">` 태그로 피드 URL을 연결해두면 브라우저와 피드 리더가 자동으로 감지한다.
+
+## 10. 기타
+
+**깔끔한 URL 구조** — `/posts/[slug]`, `/categories/[category]` 패턴으로 path 기반 URL을 유지한다.
+
+쿼리 파라미터 남용 없이 사람이 읽을 수 있는 URL이 SEO에 유리하다.
+
+**커스텀 404 페이지** — 깨진 링크로 들어온 사용자를 홈으로 안내한다.
+
+검색엔진도 404 응답을 받으면 해당 URL을 인덱스에서 제거한다.
+
+**Google Search Console 인증** — 메타 태그로 소유권을 인증하면 검색 성능 데이터를 모니터링할 수 있다.
+
+인덱싱 상태, 검색 쿼리, 클릭 수 같은 데이터를 볼 수 있어서 SEO 개선 방향을 잡기 좋다.
+
+## 마무리
+
+SEO는 한 번에 완벽하게 할 필요 없다.
+
+메타 태그와 sitemap 같은 기본부터 챙기고, 구조화 데이터나 이미지 최적화를 하나씩 추가하면 된다.
+
+Next.js App Router를 쓰고 있다면 대부분의 기법이 프레임워크 레벨에서 지원되니까 적용이 간단하다.
