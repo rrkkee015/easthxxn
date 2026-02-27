@@ -3,7 +3,9 @@ import { MDXContent } from "@/components/mdx-components";
 import { CommentSection } from "@/components/comment-section";
 import { ReadingProgress } from "@/components/reading-progress";
 import { TableOfContents } from "@/components/table-of-contents";
+import { Breadcrumb } from "@/components/breadcrumb";
 import { formatDate } from "@/lib/utils";
+import { getCategoryLabel } from "@/lib/categories";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -63,16 +65,41 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.description,
-    datePublished: post.date,
-    author: { "@type": "Person", name: "easthxxn", url: siteUrl },
-    url: `${siteUrl}/posts/${slug}`,
-    keywords: post.tags,
-  };
+  const categoryLabel =
+    post.category !== "uncategorized" ? getCategoryLabel(post.category) : null;
+
+  const breadcrumbItems = [
+    { label: "홈", href: "/" },
+    ...(categoryLabel
+      ? [{ label: categoryLabel, href: `/categories/${post.category}` }]
+      : []),
+    { label: post.title },
+  ];
+
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.description,
+      datePublished: post.date,
+      author: { "@type": "Person", name: "easthxxn", url: siteUrl },
+      url: `${siteUrl}/posts/${slug}`,
+      keywords: post.tags,
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems
+        .filter((item) => item.href)
+        .map((item, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: item.label,
+          item: `${siteUrl}${item.href}`,
+        })),
+    },
+  ];
 
   return (
     <div className="relative">
@@ -83,6 +110,7 @@ export default async function PostPage({ params }: PostPageProps) {
       <ReadingProgress />
       <article className="mt-6">
         <header className="mb-8">
+          <Breadcrumb items={breadcrumbItems} />
           <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
           <div className="flex items-center gap-2 text-sm text-foreground/50">
             <time dateTime={post.date}>{formatDate(post.date)}</time>
