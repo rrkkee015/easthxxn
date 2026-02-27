@@ -17,12 +17,12 @@ export function PostCard({ title, description, date, tags, slug }: PostCardProps
           {title}
         </h2>
         <p className="mt-1 text-foreground/60 text-sm">{description}</p>
-        <div className="mt-2 flex items-center gap-2 text-xs text-foreground/40">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-foreground/40">
           <time dateTime={date}>{formatDate(date)}</time>
           {tags.length > 0 && (
             <>
               <span>&middot;</span>
-              <div className="flex gap-1">
+              <div className="flex flex-wrap gap-1">
                 {tags.map((tag) => (
                   <span key={tag}>#{tag}</span>
                 ))}
