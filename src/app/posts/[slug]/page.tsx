@@ -112,12 +112,12 @@ export default async function PostPage({ params }: PostPageProps) {
         <header className="mb-8">
           <Breadcrumb items={breadcrumbItems} />
           <h1 className="text-2xl font-bold mb-2">{post.title}</h1>
-          <div className="flex items-center gap-2 text-sm text-foreground/50">
-            <time dateTime={post.date}>{formatDate(post.date)}</time>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-foreground/50">
+            <time dateTime={post.date} className="shrink-0">{formatDate(post.date)}</time>
             {post.tags.length > 0 && (
               <>
                 <span>&middot;</span>
-                <div className="flex gap-1">
+                <div className="flex flex-wrap gap-1">
                   {post.tags.map((tag) => (
                     <span key={tag}>#{tag}</span>
                   ))}
