@@ -10,7 +10,7 @@ published: true
 
 ![JS this](/images/posts/js-this.png)
 
-우리 팀장이 면접에 들어가면 this를 꼭 물어본다고 한다.
+우리 리더가 경력 면접에 들어가면 this를 꼭 물어본다고 한다.
 
 나한테 물어보면 어떻게 답할까 고민하다 보니, 글로 정리하게 됐다.
 
@@ -18,7 +18,7 @@ published: true
 
 ## 함수는 객체다
 
-JS에서 함수는 **일급 객체(First-class Object)**다.
+JS에서 함수는 일급 객체(First-class Object)다.
 
 프로퍼티를 가질 수 있고, 변수에 담기고, 인자로 넘겨지고, 어디서든 호출된다.
 
@@ -45,8 +45,8 @@ function greet() {
 함수는 정의 시점에 소유자가 고정되지 않는다.
 
 ```js
-const kim = { name: 'Kim', greet };
-const lee = { name: 'Lee', greet };
+const kim = { name: "Kim", greet };
+const lee = { name: "Lee", greet };
 
 kim.greet(); // this → kim → 'Kim'
 lee.greet(); // this → lee → 'Lee'
@@ -74,8 +74,8 @@ fn(); // undefined
 `Function.prototype`에 있는 `call`, `apply`, `bind`가 바로 그거다.
 
 ```js
-greet.call(kim);   // this를 kim으로 명시
-greet.apply(lee);  // this를 lee로 명시
+greet.call(kim); // this를 kim으로 명시
+greet.apply(lee); // this를 lee로 명시
 
 const bound = greet.bind(kim);
 bound(); // this가 kim으로 고정
@@ -92,7 +92,7 @@ function Person(name) {
   this.name = name;
 }
 
-const p = new Person('Choi');
+const p = new Person("Choi");
 console.log(p.name); // 'Choi'
 ```
 
@@ -109,14 +109,14 @@ console.log(p.name); // 'Choi'
 
 ## this 바인딩 규칙 정리
 
-| 호출 방식 | this | 이유 |
-|---|---|---|
-| `fn()` | globalThis (strict: `undefined`) | 소유자 없이 호출 → 기본값 |
-| `obj.fn()` | `obj` | `.` 왼쪽이 소유자 |
-| `fn.call(ctx)` / `apply` | `ctx` | 함수 객체의 메서드로 명시 지정 |
-| `fn.bind(ctx)()` | `ctx` | 새 함수 객체를 만들어 고정 |
-| `new Fn()` | 새로 생성된 인스턴스 | 생성자 패턴 |
-| `() => {}` | 선언 시점의 외부 this | 자체 this 바인딩 없음 (lexical) |
+| 호출 방식                | this                             | 이유                            |
+| ------------------------ | -------------------------------- | ------------------------------- |
+| `fn()`                   | globalThis (strict: `undefined`) | 소유자 없이 호출 → 기본값       |
+| `obj.fn()`               | `obj`                            | `.` 왼쪽이 소유자               |
+| `fn.call(ctx)` / `apply` | `ctx`                            | 함수 객체의 메서드로 명시 지정  |
+| `fn.bind(ctx)()`         | `ctx`                            | 새 함수 객체를 만들어 고정      |
+| `new Fn()`               | 새로 생성된 인스턴스             | 생성자 패턴                     |
+| `() => {}`               | 선언 시점의 외부 this            | 자체 this 바인딩 없음 (lexical) |
 
 ## 프로토타입과 this
 
@@ -130,10 +130,10 @@ function Animal(name) {
 }
 
 Animal.prototype.speak = function () {
-  console.log(this.name + ' makes a sound');
+  console.log(this.name + " makes a sound");
 };
 
-const dog = new Animal('Dog');
+const dog = new Animal("Dog");
 dog.speak(); // 'Dog makes a sound'
 ```
 
@@ -163,14 +163,14 @@ dog.speak(); // 'Dog makes a sound'
 
 ```js
 const team = {
-  name: 'Frontend',
-  members: ['Dawn', 'Alex'],
+  name: "Frontend",
+  members: ["Dawn", "Alex"],
   printMembers() {
     this.members.forEach((m) => {
       console.log(`${m} belongs to ${this.name}`);
       // 화살표 함수라서 this === team (외부 스코프의 this)
     });
-  }
+  },
 };
 ```
 
