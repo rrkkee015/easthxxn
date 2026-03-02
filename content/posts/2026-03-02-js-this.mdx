@@ -1,0 +1,252 @@
+---
+title: "면접에서 this 물어보면 이렇게 답하겠다"
+slug: "2026-03-02-js-this"
+date: "2026-03-02"
+description: "JS 함수가 객체라는 사실에서 출발하면 this가 왜 존재하고 어떻게 동작하는지 자연스럽게 이해된다."
+category: "dev"
+tags: ["javascript", "this", "interview", "prototype"]
+published: true
+---
+
+![JS this](/images/posts/js-this.png)
+
+우리 팀장이 면접에 들어가면 this를 꼭 물어본다고 한다.
+
+나한테 물어보면 어떻게 답할까 고민하다 보니, 글로 정리하게 됐다.
+
+결론부터 말하면 **this는 함수가 객체이기 때문에 존재한다.**
+
+## 함수는 객체다
+
+Java나 C++에서 메서드는 클래스에 귀속된다.
+
+`this`가 항상 인스턴스를 가리키는 게 당연하다.
+
+JS는 다르다.
+
+```js
+function greet() {
+  console.log(this.name);
+}
+```
+
+`greet`는 어디에도 소속되지 않은 독립적인 Function 객체다.
+
+이걸 아무 객체에나 붙일 수 있다.
+
+```js
+const kim = { name: 'Kim', greet };
+const lee = { name: 'Lee', greet };
+
+kim.greet(); // 'Kim'
+lee.greet(); // 'Lee'
+```
+
+같은 함수 객체인데 호출 방식에 따라 `this`가 달라진다.
+
+함수가 독립 객체이기 때문에 벌어지는 일이다.
+
+함수가 특정 객체에 종속되어 있었다면, 이런 장치가 필요 없었을 거다.
+
+## this 바인딩 규칙
+
+함수가 객체라서, 호출 시점에 this를 결정해야 한다.
+
+규칙은 4가지다.
+
+### 1. 기본 바인딩
+
+```js
+function fn() {
+  console.log(this);
+}
+
+fn(); // window (strict mode: undefined)
+```
+
+호출 주체가 없으면 전역 객체가 들어간다.
+
+strict mode에서는 `undefined`.
+
+### 2. 암시적 바인딩
+
+```js
+const obj = {
+  name: 'obj',
+  fn() {
+    console.log(this.name);
+  }
+};
+
+obj.fn(); // 'obj'
+```
+
+`.` 왼쪽에 있는 객체가 this가 된다.
+
+여기서 흔한 실수가 나온다.
+
+```js
+const extracted = obj.fn;
+extracted(); // undefined
+```
+
+함수를 꺼내는 순간 호출 주체가 사라진다.
+
+함수는 객체니까, 변수에 할당하면 함수 객체에 대한 참조만 복사된다.
+
+`obj`와의 연결은 끊긴다.
+
+### 3. 명시적 바인딩
+
+함수가 객체이기 때문에, 함수 자체에 메서드가 있다.
+
+`Function.prototype`에 `call`, `apply`, `bind`가 정의되어 있다.
+
+```js
+function greet() {
+  console.log(this.name);
+}
+
+const user = { name: 'Park' };
+
+greet.call(user);  // 'Park'
+greet.apply(user); // 'Park'
+
+const bound = greet.bind(user);
+bound(); // 'Park'
+```
+
+this를 직접 지정한다.
+
+`call`과 `apply`는 즉시 실행, `bind`는 this가 고정된 새 함수를 반환한다.
+
+### 4. new 바인딩
+
+```js
+function Person(name) {
+  this.name = name;
+}
+
+const p = new Person('Choi');
+console.log(p.name); // 'Choi'
+```
+
+`new`가 하는 일:
+
+1. 빈 객체를 생성한다
+2. 그 객체의 `[[Prototype]]`을 `Person.prototype`에 연결한다
+3. `Person` 함수를 호출하면서 `this`를 새 객체에 바인딩한다
+4. 함수가 객체를 반환하지 않으면 새 객체를 반환한다
+
+핵심은 3번이다.
+
+함수는 그냥 함수 객체일 뿐인데, `new`가 this를 새 객체로 바인딩해서 생성자처럼 동작하게 만든다.
+
+## 프로토타입과 this
+
+JS는 프로토타입 기반 언어다.
+
+클래스가 아니라, 객체가 다른 객체를 직접 상속한다.
+
+```js
+function Animal(name) {
+  this.name = name;
+}
+
+Animal.prototype.speak = function () {
+  console.log(this.name + ' makes a sound');
+};
+
+const dog = new Animal('Dog');
+dog.speak(); // 'Dog makes a sound'
+```
+
+`speak`은 `dog`에 없다.
+
+프로토타입 체인을 타고 `Animal.prototype`에서 찾는다.
+
+그런데 `this`는 `Animal.prototype`이 아니라 `dog`을 가리킨다.
+
+**메서드가 어디에 정의되어 있는지가 아니라, 누가 호출했는지가 this를 결정한다.**
+
+이게 프로토타입 상속이 작동하는 핵심이다.
+
+메서드는 프로토타입에 한 벌만 두고, this로 인스턴스를 구분한다.
+
+만약 this가 정적으로 바인딩됐다면 — 함수가 정의된 곳의 객체를 가리켰다면 — `this`는 항상 `Animal.prototype`을 가리킬 거다.
+
+프로토타입 기반 상속이 성립하지 않는다.
+
+**this가 동적으로 바인딩되는 건 프로토타입 언어의 필수 조건이다.**
+
+## arrow function은 왜 다른가
+
+```js
+const obj = {
+  name: 'obj',
+  fn: () => {
+    console.log(this.name);
+  }
+};
+
+obj.fn(); // undefined
+```
+
+arrow function에는 자체 this가 없다.
+
+선언 시점의 외부 스코프 this를 그대로 캡처한다 (lexical this).
+
+왜 이런 설계가 필요했을까?
+
+```js
+const timer = {
+  seconds: 0,
+  start() {
+    setInterval(function () {
+      this.seconds++; // this는 timer가 아니라 window
+    }, 1000);
+  }
+};
+```
+
+콜백 함수는 호출 주체가 없으니 기본 바인딩이 적용된다.
+
+ES6 이전에는 `const self = this`나 `.bind(this)`로 우회했다.
+
+```js
+const timer = {
+  seconds: 0,
+  start() {
+    setInterval(() => {
+      this.seconds++; // this는 start()의 this = timer
+    }, 1000);
+  }
+};
+```
+
+arrow function은 "나는 독립 객체가 아니라, 상위 스코프에 종속된 표현식이다"라고 선언하는 거다.
+
+함수의 두 가지 성격 — 독립 객체 vs 스코프 종속 표현식 — 을 문법으로 구분한 셈이다.
+
+## 면접에서 답한다면
+
+> this가 뭐예요?
+
+이렇게 답하겠다.
+
+> JS에서 함수는 독립적인 객체입니다.
+> 어떤 객체에 소속되지 않기 때문에, 함수를 실행할 때 호출 주체를 알려주는 장치가 필요합니다.
+> 그게 this입니다.
+>
+> this는 함수가 호출되는 시점에 동적으로 결정되고, 기본 바인딩 · 암시적 바인딩 · 명시적 바인딩 · new 바인딩 4가지 규칙이 있습니다.
+>
+> 동적 바인딩은 프로토타입 기반 상속의 필수 조건이기도 합니다.
+> 메서드가 프로토타입 체인 어딘가에 정의되어 있더라도, this가 호출한 인스턴스를 가리켜야 상속이 동작합니다.
+>
+> arrow function은 이 규칙의 예외입니다.
+> 자체 this가 없고 선언 시점의 외부 스코프 this를 캡처합니다.
+> 콜백에서 this 컨텍스트를 유지하기 위한 설계입니다.
+
+규칙만 외우면 금방 까먹는다.
+
+왜 존재하는지 이해하면 규칙은 자연스럽게 따라온다.
