@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: resolve(__dirname),
   },
+  outputFileTracingExcludes: {
+    "*": ["public/images/**"],
+  },
 };
 
 export default nextConfig;
