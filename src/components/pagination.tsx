@@ -6,6 +6,11 @@ interface PaginationProps {
   basePath: string;
 }
 
+const navBtnActive =
+  "px-3 py-1.5 rounded-md whitespace-nowrap text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors";
+const navBtnDisabled =
+  "px-3 py-1.5 rounded-md whitespace-nowrap text-foreground/20 cursor-not-allowed";
+
 export function Pagination({ currentPage, totalPages, basePath }: PaginationProps) {
   if (totalPages <= 1) return null;
 
@@ -16,14 +21,11 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
   return (
     <nav aria-label="페이지네이션" className="mt-10 flex items-center justify-center gap-2 text-sm">
       {currentPage > 1 ? (
-        <Link
-          href={pageHref(currentPage - 1)}
-          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors whitespace-nowrap"
-        >
+        <Link href={pageHref(currentPage - 1)} className={navBtnActive}>
           &larr; 이전
         </Link>
       ) : (
-        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed whitespace-nowrap">
+        <span className={navBtnDisabled}>
           &larr; 이전
         </span>
       )}
@@ -43,14 +45,11 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
       ))}
 
       {currentPage < totalPages ? (
-        <Link
-          href={pageHref(currentPage + 1)}
-          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors whitespace-nowrap"
-        >
+        <Link href={pageHref(currentPage + 1)} className={navBtnActive}>
           다음 &rarr;
         </Link>
       ) : (
-        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed whitespace-nowrap">
+        <span className={navBtnDisabled}>
           다음 &rarr;
         </span>
       )}
