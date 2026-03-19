@@ -18,12 +18,12 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
       {currentPage > 1 ? (
         <Link
           href={pageHref(currentPage - 1)}
-          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors"
+          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors whitespace-nowrap"
         >
           &larr; 이전
         </Link>
       ) : (
-        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed">
+        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed whitespace-nowrap">
           &larr; 이전
         </span>
       )}
@@ -45,12 +45,12 @@ export function Pagination({ currentPage, totalPages, basePath }: PaginationProp
       {currentPage < totalPages ? (
         <Link
           href={pageHref(currentPage + 1)}
-          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors"
+          className="px-3 py-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-foreground/5 transition-colors whitespace-nowrap"
         >
           다음 &rarr;
         </Link>
       ) : (
-        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed">
+        <span className="px-3 py-1.5 rounded-md text-foreground/20 cursor-not-allowed whitespace-nowrap">
           다음 &rarr;
         </span>
       )}
