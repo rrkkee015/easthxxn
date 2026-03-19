@@ -17,9 +17,18 @@ function MdxParagraph({ children, ...props }: React.ComponentProps<"p">) {
   return <p {...props}>{children}</p>;
 }
 
+function MdxTable(props: React.ComponentProps<"table">) {
+  return (
+    <div className="table-wrapper">
+      <table {...props} />
+    </div>
+  );
+}
+
 const sharedComponents = {
   img: MdxImage,
   p: MdxParagraph,
+  table: MdxTable,
 };
 
 const useMDXComponent = (code: string) => {

@@ -31,6 +31,26 @@ h3[id] {
   scroll-margin-top: 3rem !important;
 }
 
+/* Responsive table — allow horizontal scroll */
+.prose .table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    linear-gradient(to right, var(--background) 30%, transparent),
+    linear-gradient(to left, var(--background) 30%, transparent),
+    radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, 0.12), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, 0.12), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+.prose .table-wrapper table {
+  width: max-content;
+  min-width: 100%;
+}
+
 /* Code block base styles */
 .prose pre {
   overflow-x: auto;
